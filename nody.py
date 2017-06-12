@@ -100,6 +100,9 @@ class ConfigMixin(object):
 
 # ------------------------------------------------------
 def getLineTanNormal(line):
+	if line.length() < 1.0E-2:
+		return QtCore.QPointF(1.0, 0.0), QtCore.QPointF(0.0, 1.0)
+
 	unitLine = line.unitVector()
 	normalLine = unitLine.normalVector()
 
@@ -172,9 +175,14 @@ class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
 		"""
 		raise NotImplementedError
 
-	def _getIntersectPoint(self, line):
+	def _getIntersectPoint(self, line, isStart):
 		"""
 		Returns the point where the line hits this node. Subclasses must provide an implementation
+		If isStart is True, the line start point is assumed to be inside the node and it should return
+		the point where the line is going out of the node shape.
+
+		If isStart is False, the line end point is assumed to be inside the node and it should return
+		the point where the line is going into the node shape.
 		"""
 		raise NotImplementedError
 
@@ -207,7 +215,11 @@ class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
 
 	def itemChange(self, change, value):
 		if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged:
-			self.setZValue(self.scene().getMaxZValue() + 1)
+			newMaxZValue = self.scene().getMaxZValue() + 1
+			self.setZValue(newMaxZValue)
+			for connection in self.__connections:
+				connection.setZValue(newMaxZValue)
+
 		return super(GNodeBase, self).itemChange(change, value)
 
 # ------------------------------------------------------
@@ -233,8 +245,8 @@ class GConnection(QtWidgets.QGraphicsObject, ConfigMixin):
 		self.__nodeTo = nodeTo
 
 		self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)
-		# TODO: Fix the problem where a node is visible and the connection from/to the node is not
-		self.setZValue(-1.0E5)
+		# TODO: Fix the problem where a node is occluded by another node and the connection from/to the node is not
+		self.setZValue(scene.getMaxZValue() + 1)
 
 		self.update()
 
@@ -250,7 +262,7 @@ class GConnection(QtWidgets.QGraphicsObject, ConfigMixin):
 
 	def __getArrowHeadPolygon(self):
 		line = QtCore.QLineF(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
-		arrowTip = self.__nodeTo._getIntersectPoint(line)
+		arrowTip = self.__nodeTo._getIntersectPoint(line, False)
 		if not arrowTip:
 			return
 
@@ -280,17 +292,19 @@ class GConnection(QtWidgets.QGraphicsObject, ConfigMixin):
 
 		linewidth = self._config['selectionLineWidth']
 
-		centerF = self.__nodeFrom._getCenter()
-		centerT = self.__nodeTo._getCenter()
+		line = QtCore.QLineF(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
+		arrowTip = self.__nodeTo._getIntersectPoint(line, False)
+		arrowTail = self.__nodeFrom._getIntersectPoint(line, True)
+		if (not arrowTip) or (not arrowTail):
+			return path
 
-		line = QtCore.QLineF(centerF, centerT)
 		tangentVector, normalVector = getLineTanNormal(line)
 
 		linePolygon = QtGui.QPolygonF()
-		linePolygon.append(centerF - normalVector * linewidth)
-		linePolygon.append(centerF + normalVector * linewidth)
-		linePolygon.append(centerT + normalVector * linewidth)
-		linePolygon.append(centerT - normalVector * linewidth)
+		linePolygon.append(arrowTail - normalVector * linewidth)
+		linePolygon.append(arrowTail + normalVector * linewidth)
+		linePolygon.append(arrowTip + normalVector * linewidth)
+		linePolygon.append(arrowTip - normalVector * linewidth)
 
 		path.addPolygon(linePolygon)
 
@@ -311,7 +325,13 @@ class GConnection(QtWidgets.QGraphicsObject, ConfigMixin):
 		self._paintStyle.applyBorderPen(painter, isSelected)
 		self._paintStyle.applyBgBrush(painter, isSelected)
 
-		painter.drawLine(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
+		line = QtCore.QLineF(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
+		arrowTip = self.__nodeTo._getIntersectPoint(line, False)
+		arrowTail = self.__nodeFrom._getIntersectPoint(line, True)
+		if (not arrowTip) or (not arrowTail):
+			return
+
+		painter.drawLine(arrowTail, arrowTip)
 		arrowHead = self.__getArrowHeadPolygon()
 		if arrowHead:
 			self._paintStyle.applyBorderBrush(painter, isSelected)
@@ -346,7 +366,7 @@ class GRectNode(GNodeBase):
 	def _getCenter(self):
 		return self.mapToScene(QtCore.QPointF(self.size().width() / 2.0, self.size().height() / 2.0))
 
-	def _getIntersectPoint(self, line):
+	def _getIntersectPoint(self, line, isStart):
 		polygon = self.mapToScene(self.boundingRect())
 		p1 = polygon.first()
 		for i in range(1, polygon.count()):
@@ -469,10 +489,13 @@ class GDotNode(GNodeBase):
 	def _getCenter(self):
 		return self.mapToScene(QtCore.QPointF(self.__radius(), self.__radius()))
 
-	def _getIntersectPoint(self, line):
+	def _getIntersectPoint(self, line, isStart):
 		center = self._getCenter()
 		tangentVector, normalVector = getLineTanNormal(line)
-		return center - tangentVector * self.__radius()
+		if isStart:
+			return center + tangentVector * self.__radius()
+		else:
+			return center - tangentVector * self.__radius()
 
 	def __radius(self):
 		return self._config['dotRadius']
@@ -519,8 +542,10 @@ if __name__ == '__main__':
 	n3.delete() # Deletes c2 and c3 too
 
 	# pb is deleted automatically when n1 is deleted
-	def cb(*args):print 'widget destroyed'
-	pb.destroyed.connect(cb)
+	def cb1(*args):print 'node destroyed'
+	n1.destroyed.connect(cb1)
+	def cb2(*args):print 'widget destroyed'
+	pb.destroyed.connect(cb2)
 	#n1.delete();
 	n1 = None # If Python keeps a reference to the widget it won't be destroyed
 
