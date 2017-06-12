@@ -4,7 +4,7 @@
 import copy
 from Qt import QtGui, QtCore, QtWidgets
 from mergeableDict import MergeableDict
-from nody_utils import PaintStyle, ConfigMixin, getLineTanNormal
+from gnode_utils import PaintStyle, ConfigMixin, getLineTanNormal
 
 # ======================================================
 # nody main classes
