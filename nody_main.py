@@ -52,6 +52,7 @@ class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
 		self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable)
 		self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)
 		self.setZValue(scene.getMaxZValue() + 1)
+		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
 
 	def delete(self):
 		"""
@@ -140,8 +141,7 @@ class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
 		self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)
 		# TODO: Fix the problem where a node is occluded by another node and the connection from/to the node is not
 		self.setZValue(scene.getMaxZValue() + 1)
-
-		self.update()
+		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
 
 	def delete(self):
 		"""
@@ -204,6 +204,13 @@ class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
 		return path
 
 	def boundingRect(self):
+
+		# boundingRect() is called after self.close() inside delete() and before the node is actually deleted
+		# Disable boundingRect() code execution if it has been deleted().
+		# __nodeFrom is None if and only if delete() has been called
+		if not self.__nodeFrom:
+			return QtCore.QRectF()
+
 		rect = QtCore.QRectF(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
 
 		arrowHead = self.__getArrowHeadPolygon()
@@ -433,16 +440,19 @@ if __name__ == '__main__':
 	n1.addWidget(pb)
 	n1.addWidget(QtWidgets.QLineEdit())
 
-	c5.delete()
+	def cb1(*args):print 'connection c5 destroyed'
+	c5.destroyed.connect(cb1)
+	c5.delete() # You can manually delete the connection in the UI by selecting it and hit delete key
+	def cb2(*args):print 'connection c2 destroyed'
+	c2.destroyed.connect(cb2)
 	n3.delete() # Deletes c2 and c3 too
 
-	# pb is deleted automatically when n1 is deleted
-	def cb1(*args):print 'node destroyed'
-	n1.destroyed.connect(cb1)
-	def cb2(*args):print 'widget destroyed'
-	pb.destroyed.connect(cb2)
-	#n1.delete();
-	n1 = None # If Python keeps a reference to the widget it won't be destroyed
+	# Widgets inside a node are deleted automatically when the node is deleted
+	def cb3(*args):print 'node n1 destroyed'
+	n1.destroyed.connect(cb3)
+	def cb4(*args):print 'button widget destroyed'
+	pb.destroyed.connect(cb4)
+	#n1.delete(); # You can manually delete the node in the UI by selecting it and hit delete key
 
 	view.show()
 
