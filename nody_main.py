@@ -5,6 +5,8 @@ from mergeableDict import MergeableDict
 from nody_utils import PaintStyle, ConfigMixin, getLineTanNormal
 
 # ======================================================
+# nody main classes
+
 class GScene(QtWidgets.QGraphicsScene):
 
 	def keyPressEvent(self, event):
@@ -25,6 +27,7 @@ class GScene(QtWidgets.QGraphicsScene):
 
 # ------------------------------------------------------
 class GView(QtWidgets.QGraphicsView):
+
 	def __init__(self, parent, scene):
 		super(GView, self).__init__(parent)
 		self.setScene(scene)
@@ -57,7 +60,7 @@ class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
 		while self.__connections:
 			connection = self.__connections.pop()
 			connection.delete()
-		self.scene().removeItem(self)
+		self.close()
 
 	def _getCenter(self):
 		"""
@@ -113,7 +116,7 @@ class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
 		return super(GNodeBase, self).itemChange(change, value)
 
 # ------------------------------------------------------
-class GConnection(QtWidgets.QGraphicsObject, ConfigMixin):
+class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
 
 	_paintStyle = PaintStyle()
 	_config = MergeableDict(
@@ -146,7 +149,7 @@ class GConnection(QtWidgets.QGraphicsObject, ConfigMixin):
 		"""
 		self.__nodeFrom._removeConnection(self)
 		self.__nodeTo._removeConnection(self)
-		self.scene().removeItem(self)
+		self.close()
 		self.__nodeFrom = None
 		self.__nodeTo = None
 
@@ -228,6 +231,8 @@ class GConnection(QtWidgets.QGraphicsObject, ConfigMixin):
 			painter.drawPolygon(arrowHead);
 
 # ======================================================
+# Concrete node classes
+
 class GRectNode(GNodeBase):
 
 	_paintStyle = PaintStyle()
