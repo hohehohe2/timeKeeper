@@ -245,6 +245,8 @@ class GConnection(QtWidgets.QGraphicsObject, ConfigMixin):
 		self.__nodeFrom._removeConnection(self)
 		self.__nodeTo._removeConnection(self)
 		self.scene().removeItem(self)
+		self.__nodeFrom = None
+		self.__nodeTo = None
 
 	def __getArrowHeadPolygon(self):
 		line = QtCore.QLineF(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
@@ -496,6 +498,9 @@ if __name__ == '__main__':
 	scene = GScene()
 	view = GView(None, scene)
 
+	config = {'shapeRoundRadius':4}
+	GRectNode.updateStyle(scene, config)
+
 	n1 = GRectNode(scene, 30, 30, 100, 100)
 	n2 = GDotNode(scene, 150, 150)
 	n3 = GRectNode(scene, 200, 30, 15, 50)
@@ -505,13 +510,19 @@ if __name__ == '__main__':
 	c3 = GConnection(n2, n3)
 	c4 = GConnection(n2, n4)
 	c5 = GConnection(n4, n1)
-	n1.addWidget(QtWidgets.QPushButton())
-	n1.addWidget(QtWidgets.QLineEdit())
-	n3.delete() # Deletes c2 and c3 too
-	c5.delete()
 
-	config = {'shapeRoundRadius':4}
-	GRectNode.updateStyle(scene, config)
+	pb = QtWidgets.QPushButton()
+	n1.addWidget(pb)
+	n1.addWidget(QtWidgets.QLineEdit())
+
+	c5.delete()
+	n3.delete() # Deletes c2 and c3 too
+
+	# pb is deleted automatically when n1 is deleted
+	def cb(*args):print 'widget destroyed'
+	pb.destroyed.connect(cb)
+	#n1.delete();
+	n1 = None # If Python keeps a reference to the widget it won't be destroyed
 
 	view.show()
 
