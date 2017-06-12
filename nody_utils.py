@@ -1,3 +1,6 @@
+# Some of the code in this file are taken from nodz (https://github.com/LeGoffLoic/Nodz)
+# Copywright for the parts are held by LeGoffLoic
+
 import copy
 from Qt import QtGui, QtCore
 from mergeableDict import MergeableDict
