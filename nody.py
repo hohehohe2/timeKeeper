@@ -147,9 +147,6 @@ class GView(QtWidgets.QGraphicsView):
 # ------------------------------------------------------
 class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
 
-	_config = MergeableDict()
-	_paintStyle = PaintStyle()
-
 	def __init__(self, scene):
 		super(GNodeBase, self).__init__()
 		scene.addItem(self)
@@ -340,14 +337,14 @@ class GConnection(QtWidgets.QGraphicsObject, ConfigMixin):
 # ======================================================
 class GRectNode(GNodeBase):
 
-	_config = copy.deepcopy(GNodeBase._config)
-	_config.merge({
-		'shapeRoundRadius' : 3,
-		'dragBorderWidth' : 4,
-		'minSize' : [20, 20],
-		'widgetLayoutType' : 'vertical', # 'horizontal', 'vertical', or 'none'
-		'widgetlayoutSpacing' : 1,
-		})
+	_paintStyle = PaintStyle()
+	_config = MergeableDict(
+		shapeRoundRadius=3,
+		dragBorderWidth=4,
+		minSize=[20, 20],
+		widgetLayoutType='vertical', # 'horizontal', 'vertical', or 'none'
+		widgetlayoutSpacing=1,
+		)
 
 	def __init__(self, scene, x, y, width, height):
 		super(GRectNode, self).__init__(scene)
@@ -477,10 +474,10 @@ class GRectNode(GNodeBase):
 # ------------------------------------------------------
 class GDotNode(GNodeBase):
 
-	_config = copy.deepcopy(GNodeBase._config)
-	_config.merge({
-		'dotRadius' : 10,
-		})
+	_paintStyle = PaintStyle()
+	_config = MergeableDict(
+		dotRadius=10,
+		)
 
 	def __init__(self, scene, x, y):
 		super(GDotNode, self).__init__(scene)
