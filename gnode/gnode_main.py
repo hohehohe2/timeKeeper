@@ -252,9 +252,11 @@ class GRectNode(GNodeBase):
 	_config = DynamicMergeableDict(
 		shapeRoundRadius=3,
 		dragBorderWidth=4,
+		dragCursorEnabled=(True, True), # horizontal, vertical
 		minSize=[20, 20],
 		widgetLayoutType='vertical', # 'horizontal', 'vertical', or 'none'
 		widgetlayoutSpacing=1,
+		margins = (3, 8, 3, 3) # left, top, right, bottom
 		)
 
 	def __init__(self, scene, x, y, width, height):
@@ -297,10 +299,10 @@ class GRectNode(GNodeBase):
 
 	def __setDraggableCursor(self, isDraggableX, isDraggableY):
 
-		wlType = self._config['widgetLayoutType']
-		if wlType == 'horizontal':
+		horizontal, vertical = self._config['dragCursorEnabled']
+		if not horizontal:
 			isDraggableX = False
-		elif wlType == 'vertical':
+		if not vertical:
 			isDraggableY = False
 
 		if isDraggableX and isDraggableY:
@@ -329,6 +331,7 @@ class GRectNode(GNodeBase):
 
 		if layout:
 			layout.setSpacing(self._config['widgetlayoutSpacing'])
+			layout.setContentsMargins(3, 8, 3, 3)
 
 	# Qt callbacks
 

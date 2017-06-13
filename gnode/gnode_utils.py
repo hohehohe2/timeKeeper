@@ -29,7 +29,7 @@ class PaintStyle(object):
 		self.__update()
 
 	def setBaseStyle(self, baseConfig):
-		self.__styleInfo.setBase(baseConfig)
+		self.__styleInfo.setBase(baseConfig.__styleInfo)
 		self.__update()
 
 	def setBorderPen(self, borderPenCol, borderPenColSel, borderPenSize, borderPenSizeSel):
