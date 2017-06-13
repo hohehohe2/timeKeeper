@@ -3,7 +3,7 @@
 
 import copy
 from Qt import QtGui, QtCore
-from nody_utils.mergeableDict import MergeableDict
+from nody_utils.mergeableDict import DynamicMergeableDict
 
 # ======================================================
 # Default style values used by PaintStyle class
@@ -23,21 +23,14 @@ _defaultStyle = {
 # ------------------------------------------------------
 class PaintStyle(object):
 
-	def __init__(self, config=None):
-		self.__styleInfo = MergeableDict()
-		self.update(_defaultStyle)		
+	def __init__(self, style=_defaultStyle):
+		self.__styleInfo = DynamicMergeableDict()
+		self.__styleInfo.update(style)	
+		self.__update()
 
-	def update(self, config):
-		"""
-		Update the style with the given config.
-		Style values can be updated partially. Values that are not overriden stay the same.
-		"""
-		s = self.__styleInfo
-		s.update(copy.deepcopy(config))
-
-		self.setBorderPen(s['borderPen']['col'], s['borderPen']['colSel'], s['borderPen']['size'], s['borderPen']['sizeSel'])
-		self.setBgBrush(s['bgPaint']['col'], s['bgPaint']['colSel'])
-		self.setBorderBrush(s['borderPen']['col'], s['borderPen']['colSel'])
+	def setBaseStyle(self, baseConfig):
+		self.__styleInfo.setBase(baseConfig)
+		self.__update()
 
 	def setBorderPen(self, borderPenCol, borderPenColSel, borderPenSize, borderPenSizeSel):
 		self.__borderPen = PaintStyle.__createPen(QtCore.Qt.SolidLine, borderPenSize, borderPenCol)
@@ -69,6 +62,12 @@ class PaintStyle(object):
 		else:
 			painter.setBrush(self.__borderBrush)
 
+	def __update(self):
+		s = self.__styleInfo
+		self.setBorderPen(s['borderPen']['col'], s['borderPen']['colSel'], s['borderPen']['size'], s['borderPen']['sizeSel'])
+		self.setBgBrush(s['bgPaint']['col'], s['bgPaint']['colSel'])
+		self.setBorderBrush(s['borderPen']['col'], s['borderPen']['colSel'])
+
 	@staticmethod
 	def __createPen(lineStyle, width, color):
 		pen = QtGui.QPen()
@@ -94,9 +93,14 @@ class ConfigMixin(object):
 		Update the paint style with config. Can be updated partially
 		"""
 		if paintConfig:
-			cls._paintStyle.update(paintConfig)
+			current = cls._paintStyle
+			cls._paintStyle = PaintStyle(paintConfig)
+			cls._paintStyle.setBaseStyle(current)
 		if config:
-			cls._config.merge(config)
+			current = cls._config
+			cls._config = DynamicMergeableDict()
+			cls._config.update(config)
+			cls._config.setBase(current)
 
 		scene.update()
 

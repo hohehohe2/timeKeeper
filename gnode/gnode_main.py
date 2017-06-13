@@ -3,7 +3,7 @@
 
 import copy
 from Qt import QtGui, QtCore, QtWidgets
-from nody_utils.mergeableDict import MergeableDict
+from nody_utils.mergeableDict import DynamicMergeableDict
 from gnode_utils import PaintStyle, ConfigMixin, getLineTanNormal
 
 # ======================================================
@@ -122,7 +122,7 @@ class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
 class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
 
 	_paintStyle = PaintStyle()
-	_config = MergeableDict(
+	_config = DynamicMergeableDict(
 		arrowHeadSize = 5,
 		selectionLineWidth = 4,
 		)
@@ -245,7 +245,7 @@ class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
 class GRectNode(GNodeBase):
 
 	_paintStyle = PaintStyle()
-	_config = MergeableDict(
+	_config = DynamicMergeableDict(
 		shapeRoundRadius=3,
 		dragBorderWidth=4,
 		minSize=[20, 20],
@@ -382,7 +382,7 @@ class GRectNode(GNodeBase):
 class GDotNode(GNodeBase):
 
 	_paintStyle = PaintStyle()
-	_config = MergeableDict(
+	_config = DynamicMergeableDict(
 		dotRadius=10,
 		)
 
