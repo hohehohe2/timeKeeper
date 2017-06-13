@@ -1,3 +1,7 @@
+# Simple node UI framework.
+# A node can have arbitrary Qt widgets inside.
+# There is no concept of grouping, ie. nested nodes through parent-child relationship
+#
 # Some of the code in this file are taken from nodz (https://github.com/LeGoffLoic/Nodz)
 # Copywright of the parts are held by LeGoffLoic
 
