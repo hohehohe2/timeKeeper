@@ -3,7 +3,7 @@
 
 import copy
 from Qt import QtGui, QtCore, QtWidgets
-from mergeableDict import MergeableDict
+from nody_utils.mergeableDict import MergeableDict
 from gnode_utils import PaintStyle, ConfigMixin, getLineTanNormal
 
 # ======================================================

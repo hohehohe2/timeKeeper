@@ -3,7 +3,7 @@
 
 import copy
 from Qt import QtGui, QtCore
-from mergeableDict import MergeableDict
+from nody_utils.mergeableDict import MergeableDict
 
 # ======================================================
 # Default style values used by PaintStyle class
