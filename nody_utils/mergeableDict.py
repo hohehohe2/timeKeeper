@@ -1,3 +1,4 @@
+# ======================================================
 class MergeableDict(dict):
 	def merge(self, other):
 		"""
@@ -23,6 +24,7 @@ class MergeableDict(dict):
 			else:
 				this[key] = ovalue
 
+# ======================================================
 class DynamicMergeableDict(dict):
 	"""
 	Works the same way as MergeableDict dynamically but very slow!
