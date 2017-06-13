@@ -103,6 +103,12 @@ class MNode(object):
 
 		self.notify('parentChanged', (oldParent, parent))
 
+	def getParent(self):
+		return self.__parent
+
+	def getChildren(self):
+		return tuple(self.__children)
+
 	def notify(self, event, data=None):
 		for observer in self.__observers:
 			observer.onNotify(self, event, data)
