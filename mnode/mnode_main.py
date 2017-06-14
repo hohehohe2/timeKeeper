@@ -129,6 +129,12 @@ class MNode(object):
 		d = self.__dict__.copy()
 
 		# Remove observers that may not be appropriate to be serialized eg. GUI classes
+		# Also we exclude observers that are not under _serializeRoot to keep parent-child
+		# relationship consistent.
+
+		# For efficiency we just check if self is _serializeRoot and exclude if it is a root
+		# expecting it prevents serializing the while MNode tree through Python reference but
+		# it doesn't work if we have additional MNode observers outside of the tree
 		observers = self.__observers[:]
 		observers = [x for x in observers if isinstance(x, MNode) and x != _serializeRoot]
 		d[privatePrefix + '__observers'] = observers
@@ -144,7 +150,7 @@ class MNode(object):
 	@staticmethod
 	def serialize(mNodes, root=None):
 		"""
-		Serialize the node network (mNodes) rooted at the given root.
+		Serialize the node tree(mNodes) rooted at the given root.
 		root should not be in mNodes
 		Observers are not pickled unless it's in the network
 		"""

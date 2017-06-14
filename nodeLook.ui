@@ -58,6 +58,9 @@
          <bold>true</bold>
         </font>
        </property>
+       <property name="decimals">
+        <number>1</number>
+       </property>
        <property name="maximum">
         <double>100000.000000000000000</double>
        </property>
@@ -98,6 +101,9 @@
        </property>
        <property name="prefix">
         <string/>
+       </property>
+       <property name="decimals">
+        <number>1</number>
        </property>
        <property name="maximum">
         <double>100000.000000000000000</double>

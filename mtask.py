@@ -1,3 +1,5 @@
+# Timekeeper Node models
+
 from mnode.mnode_main import MNode
 
 # ======================================================
@@ -38,10 +40,13 @@ class MTask(MNode):
 		self.setAttr('actual', sumChildActuals)
 
 # ------------------------------------------------------
-class MDot(MNode):
+class MTaskDot(MNode):
 	def __init__(self, parent=None):
-		super(MTask, self).__init__(parent)
+		super(MTaskDot, self).__init__(parent)
 		self.setAttr('pos', (0, 0))
+
+# ------------------------------------------------------
+# We use Python tuple (mTaskFrom, mTaskTo) to represent connection
 
 # ======================================================
 if __name__ == '__main__':
