@@ -50,7 +50,7 @@ class GTask(GRectNode):
 
 	def _onNotify(self, notifier, event, data):
 		if event in 'attrChanged':
-			# This only node this object is observing is MTask that this GUI node is for
+			# The only node this object is observing is an MTask which this GUI node is for
 			self.__onAttrChanged(notifier, data)
 		elif event == 'deleted':
 			self.__onMTaskDeleted()

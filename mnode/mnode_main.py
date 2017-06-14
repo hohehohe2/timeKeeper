@@ -3,12 +3,18 @@
 """
 It has a base calss _MNodeBase and a couple of concrete subclasses MNode, MNodeDot.
 
+We use MNode for regular node, MNodeDot for dot node, and Python tuple for connection
+
+It's not worth a class to model the whole network, we can just
+have _MNodeBase tree and list of tuples for connections
+Just like Maya, nodes and connections can be handled separately
+
+
 An _MNodeBase
 	- has attributes
 	- can be observed
 	- can observe other nodes
 	- can have parent-child relationship
-	- can have connection from/to other _MNodeBases
 
 When a node is deleted, recursively all the children are deleted beforehand
 
@@ -45,8 +51,6 @@ class _MNodeBase(object):
 		self.__observers = [] # List of _MNodeBases that are observing this object
 		self.__parent = None
 		self.__children = []
-		self.__connectedFrom = []
-		self.__connectingTo = []
 
 		self.setParent(parent)
 
@@ -62,8 +66,6 @@ class _MNodeBase(object):
 			self.__parent = None
 
 		self.__attrs = {}
-		self.__connectedFrom = []
-		self.__connectingTo = []
 
 		self._notify('deleted')
 
@@ -115,18 +117,6 @@ class _MNodeBase(object):
 	def getChildren(self):
 		return tuple(self.__children)
 
-	def addConnection(self, toNodeBase):
-		assert(isinstance(toNodeBase, _MNodeBase))
-		if not toNodeBase in self.__connectingTo:
-			self.__connectingTo.append(toNodeBase)
-			toNodeBase.__connectedFrom.append(self)
-
-	def removeConnection(self, toNodeBase):
-		assert(isinstance(toNodeBase, _MNodeBase))
-		if toNodeBase in self.__connectingTo:
-			self.__connectingTo.remove(toNodeBase)
-			toNodeBase.__connectedFrom.remove(self)
-
 	def _notify(self, event, data=None):
 		for observer in self.__observers:
 			observer._onNotify(self, event, data)
@@ -159,8 +149,6 @@ class _MNodeBase(object):
 			d[privatePrefix + attrName] = candCopy
 
 		excludeNonNetwork(self.__observers, '__observers')
-		excludeNonNetwork(self.__connectingTo, '__connectingTo')
-		excludeNonNetwork(self.__connectedFrom, '__connectedFrom')
 
 		# Serialize only the subtree so that it won't pickle every hierarchy from the global root
 		if d[privatePrefix + '__parent'] == _serializeRoot:
@@ -177,11 +165,17 @@ class MNode(_MNodeBase):
 		self.setAttr('pos', (0, 0))
 		self.setAttr('size', (0, 0))
 
+	def getType(self):
+		return 'node'
+
 # ------------------------------------------------------
 class MNodeDot(_MNodeBase):
 	def __init__(self, parent=None):
 		super(MNodeDot, self).__init__(parent)
 		self.setAttr('pos', (0, 0))
+
+	def getType(self):
+		return 'dot'
 
 # ------------------------------------------------------
 _serializeRoot = None

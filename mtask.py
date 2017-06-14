@@ -1,4 +1,9 @@
-# Timekeeper model nodes
+"""
+Timekeeper model
+
+We use MTask for time keeper node, reuse MNodeDot for dot node, and Python tuple for connection
+Just like Maya, nodes and connections are handled separately
+"""
 
 from mnode.mnode_main import MNode
 
