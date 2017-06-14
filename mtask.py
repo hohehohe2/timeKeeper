@@ -1,4 +1,4 @@
-# Timekeeper Node models
+# Timekeeper model nodes
 
 from mnode.mnode_main import MNode
 
@@ -13,10 +13,6 @@ class MTask(MNode):
 		self.setAttr('status', 'waiting') # 'waiting', 'wip', 'done'
 		self.setAttr('isCurrent', False) # True if now working on it
 
-		# UI params
-		self.setAttr('pos', (0, 0))
-		self.setAttr('size', (0, 0))
-
 		self.addObserver(self)
 
 	def setParent(self, parent):
@@ -27,7 +23,7 @@ class MTask(MNode):
 		if parent:
 			self.addObserver(parent)
 
-	def onNotify(self, notifier, event, data):
+	def onNotify_(self, notifier, event, data):
 		if notifier in self.getChildren() and event == 'attrChanged' and data[0] == 'actual':
 			self.__updateActual()
 		if notifier == self and event == 'childRemoved':
@@ -39,15 +35,6 @@ class MTask(MNode):
 			sumChildActuals += child.getAttr('actual')
 		self.setAttr('actual', sumChildActuals)
 
-# ------------------------------------------------------
-class MTaskDot(MNode):
-	def __init__(self, parent=None):
-		super(MTaskDot, self).__init__(parent)
-		self.setAttr('pos', (0, 0))
-
-# ------------------------------------------------------
-# We use Python tuple (mTaskFrom, mTaskTo) to represent connection
-
 # ======================================================
 if __name__ == '__main__':
 
@@ -58,7 +45,9 @@ if __name__ == '__main__':
 		ct1 = MTask(pt1)
 		ct2 = MTask(pt1)
 		gt1 = MTask(ct2)
-		return MNode.serialize([root, pt1, pt2, ct1, ct2, gt1])
+
+		from mnode.mnode_main import MNode, serialize
+		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	pickledNetwork = createNetwork()
 	import cPickle as pickle

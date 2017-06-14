@@ -1,3 +1,5 @@
+# Timekeeper GUI node
+
 from Qt import QtGui, QtWidgets, QtCompat
 from gnode.gnode_main import GScene, GView, GRectNode
 from gnode.gnode_utils import PaintStyle
@@ -40,7 +42,13 @@ class GTask(GRectNode):
 		# This GTask instance is deleted when the model node deletion is observed
 		self.__mTask.delete()
 
-	def onNotify(self, notifier, event, data):
+	def getMTask(self):
+		"""
+		Get the MTask node this object is for
+		"""
+		return self.__mTask
+
+	def onNotify_(self, notifier, event, data):
 		if event in 'attrChanged':
 			# This only node this object is observing is MTask that this GUI node is for
 			self.__onAttrChanged(notifier, data)
@@ -133,6 +141,51 @@ class GTask(GRectNode):
 		finally:
 			self.__isDescriptionChanging = False
 
+
+# ======================================================
+class GCanvas(object):
+
+	def __init__(self, rootMTask=None):
+		self.__scene = GScene()
+		self.__view = GView(None, scene)
+		self.show(rootMTask)
+
+	def clear(self):
+		self.__scene.clear()
+
+	# def show(self, rootMTask):
+	# 	"""
+	# 	Show network under rootMTask 
+	# 	"""
+	# 	self.clear()
+	# 	self.__rootMTask = rootMTask
+	# 	if not rootMTask:
+	# 		return
+
+	# 	for child in rootMTask.
+
+	# 	self.__view.show()
+
+	# 	pickledNetwork = createNetwork()
+	# 	import cPickle as pickle
+	# 	network1 = pickle.loads(pickledNetwork)
+	# 	network2 = pickle.loads(pickledNetwork)
+
+	# 	for node in network1:
+	# 		GTask(scene, node)
+	# 	for node in network2:
+	# 		gt = GTask(scene, node)
+	# 		pos = node.getAttr('pos')
+	# 		node.setAttr('pos', (pos[0] + 360, pos[1] + 10))
+
+	# 	view.show()
+
+	# @staticmethod
+	# def serialize(gTasks, rootGTask=None):
+	# 	"""
+	# 	Serialize the underlining models
+	# 	"""
+
 # ======================================================
 if __name__ == '__main__':
 
@@ -153,8 +206,8 @@ if __name__ == '__main__':
 		ct1.setAttr('actual', 3.0)
 		gt1.setAttr('actual', 4.0)
 
-		from mnode.mnode_main import MNode
-		return MNode.serialize([root, pt1, pt2, ct1, ct2, gt1])
+		from mnode.mnode_main import serialize
+		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	global app, view
 
