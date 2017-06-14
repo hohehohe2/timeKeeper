@@ -48,7 +48,7 @@ class GTask(GRectNode):
 		"""
 		return self.__mTask
 
-	def onNotify_(self, notifier, event, data):
+	def _onNotify(self, notifier, event, data):
 		if event in 'attrChanged':
 			# This only node this object is observing is MTask that this GUI node is for
 			self.__onAttrChanged(notifier, data)

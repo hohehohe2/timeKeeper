@@ -10,8 +10,8 @@ An _MNodeBase
 	- can have parent-child relationship
 When a node is deleted, recursively all the children are deleted beforehand
 
-An observer should have onNotify_() method;
-	onNotify_(self, notifier, event, data)
+An observer should have _onNotify() method;
+	_onNotify(self, notifier, event, data)
 
 Predefined events:
 	'deleting': no additional data
@@ -30,7 +30,7 @@ A node can observe itself;
 
 	self.addObserver(self)
 	...
-	def onNotify_(self, notifier, event, data):
+	def _onNotify(self, notifier, event, data):
 		if notifier == self and event in ['childAdded', 'childRemoved']:
 			...
 """
@@ -43,11 +43,12 @@ class _MNodeBase(object):
 		self.__observers = [] # List of _MNodeBases that are observing this object
 		self.__parent = None
 		self.__children = []
+		self.__connections = []
 
 		self.setParent(parent)
 
 	def delete(self):
-		self.notify('deleting')
+		self._notify('deleting')
 
 		while self.__children:
 			child = self.__children.pop()
@@ -59,7 +60,7 @@ class _MNodeBase(object):
 
 		self.__attrs = {}
 
-		self.notify('deleted')
+		self._notify('deleted')
 
 		while self.__observers:
 			observer = self.__observers.pop()
@@ -71,7 +72,7 @@ class _MNodeBase(object):
 		"""
 		oldValue = self.__attr.get(name, NOT_EXIST)
 		self.__attr[name] = value
-		self.notify('attrChanged', (name, oldValue, value))
+		self._notify('attrChanged', (name, oldValue, value))
 
 	def getAttr(self, name):
 		return self.__attr[name]
@@ -101,7 +102,7 @@ class _MNodeBase(object):
 		if parent:
 			parent._addChild(self)
 
-		self.notify('parentChanged', (oldParent, parent))
+		self._notify('parentChanged', (oldParent, parent))
 
 	def getParent(self):
 		return self.__parent
@@ -109,19 +110,19 @@ class _MNodeBase(object):
 	def getChildren(self):
 		return tuple(self.__children)
 
-	def notify(self, event, data=None):
+	def _notify(self, event, data=None):
 		for observer in self.__observers:
-			observer.onNotify_(self, event, data)
+			observer._onNotify(self, event, data)
 
 	def _removeChild(self, child):
 		if child in self.__children:
 			self.__children.remove(child)
-		self.notify('childRemoved', child)
+		self._notify('childRemoved', child)
 
 	def _addChild(self, child):
 		if not child in self.__children:
 			self.__children.append(child)
-		self.notify('childAdded', child)
+		self._notify('childAdded', child)
 
 	def __getstate__(self):
 		privatePrefix = '_MNodeBase'
@@ -187,7 +188,7 @@ if __name__ == '__main__':
 			return self.getAttr('name')
 
 	class ObservingMNode(NamedMNode):
-		def onNotify_(self, notifier, event, data):
+		def _onNotify(self, notifier, event, data):
 			print notifier.getAttr('name'), event, data	
 
 	a = ObservingMNode('a')

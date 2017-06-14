@@ -23,7 +23,7 @@ class MTask(MNode):
 		if parent:
 			self.addObserver(parent)
 
-	def onNotify_(self, notifier, event, data):
+	def _onNotify(self, notifier, event, data):
 		if notifier in self.getChildren() and event == 'attrChanged' and data[0] == 'actual':
 			self.__updateActual()
 		if notifier == self and event == 'childRemoved':
