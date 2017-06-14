@@ -9,7 +9,6 @@ class GTaskNodeScene(GNodeSceneBase):
 		MTaskDotNode : GTaskDotNode,
 		}
 
-
 # ======================================================
 if __name__ == '__main__':
 	import sys
@@ -52,7 +51,8 @@ if __name__ == '__main__':
 
 	ct1.setParent(root)
 	ct2.setParent(root)
-	scene.addNetwork([ct1, ct2], ())
+	connections = ((ct1, ct2),)
+	scene.addNetwork([ct1, ct2], connections)
 
 	view.show()
 	app.exec_()

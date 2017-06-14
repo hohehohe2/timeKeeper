@@ -1,6 +1,6 @@
 # Timekeeper GUI node
 
-from gnode.gnode_main import GScene
+from gnode.gnode_main import GScene, GConnection
 from mnode.mnode_main import MNode
 
 # ======================================================
@@ -37,14 +37,17 @@ class GNodeSceneBase(GScene):
 		_classMapper is used to find the appropriate GNode sub class for each mNode
 		"""
 		items = self.items()
+		mNodeToGNode = {}
 		for mNode in mNodes:
 			if mNode in items:
 				continue
 			if mNode.getParent() != self.__rootMNode:
 				continue
-			gNodeClass = self._classMapper[mNode.__class__](self, mNode)
+			gNodeClass = self._classMapper[mNode.__class__]
+			gNode = gNodeClass(self, mNode) # instanciate GNode sub class instance for mNode
+			mNodeToGNode[mNode] = gNode
 
 		for connectionFrom, connectionTo in connections:
 			assert(connectionFrom in mNodes)
 			assert(connectionTo in mNodes)
-			GConnection(connectionFrom, connectionTo)
+			GConnection(mNodeToGNode[connectionFrom], mNodeToGNode[connectionTo])
