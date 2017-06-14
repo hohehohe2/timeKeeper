@@ -3,9 +3,8 @@ from mnode.mnode_main import MNode
 # ======================================================
 # Prefix 'M' means 'Model'
 class MTask(MNode):
-	def __init__(self, parent=None, name=''):
+	def __init__(self, parent=None):
 		super(MTask, self).__init__(parent)
-		self.setAttr('name', name)
 		self.setAttr('description', '') # Long description
 		self.setAttr('estimated', 0) # Estimated time
 		self.setAttr('actual', 0) # Actual time needed
@@ -26,17 +25,6 @@ class MTask(MNode):
 		if parent:
 			self.addObserver(parent)
 
-	def getName(self):
-		return self.getAttr('name')
-
-	def getPath(self):
-		name = self.getAttr('name')
-		parent = self.getParent()
-		if parent:
-			return parent.getPath() + [name]
-		else:
-			return [name]
-
 	def onNotify(self, notifier, event, data):
 		if notifier in self.getChildren() and event == 'attrChanged' and data[0] == 'actual':
 			self.__updateActual()
@@ -49,17 +37,28 @@ class MTask(MNode):
 			sumChildActuals += child.getAttr('actual')
 		self.setAttr('actual', sumChildActuals)
 
+# ------------------------------------------------------
+class MDot(MNode):
+	def __init__(self, parent=None):
+		super(MTask, self).__init__(parent)
+		self.setAttr('pos', (0, 0))
+
 # ======================================================
 if __name__ == '__main__':
 
-	root = MTask()
-	pt1 = MTask(root, 'pt1')
-	pt2 = MTask(root,'pt2')
-	ct1 = MTask(pt1, 'ct1')
-	ct2 = MTask(pt1, 'ct2')
-	gt1 = MTask(ct2, 'gt1')
+	def createNetwork():
+		root = MTask()
+		pt1 = MTask(root)
+		pt2 = MTask(root)
+		ct1 = MTask(pt1)
+		ct2 = MTask(pt1)
+		gt1 = MTask(ct2)
+		return MNode.serialize([root, pt1, pt2, ct1, ct2, gt1])
 
-	assert(gt1.getPath() == ['', 'pt1', 'ct2', 'gt1'])
+	pickledNetwork = createNetwork()
+	import cPickle as pickle
+	root, pt1, pt2, ct1, ct2, gt1 = pickle.loads(pickledNetwork)
+
 	ct1.setAttr('actual', 3.0)
 	assert(pt1.getAttr('actual') == 3.0)
 	gt1.setAttr('actual', 4.0)
@@ -68,4 +67,4 @@ if __name__ == '__main__':
 	assert(pt1.getAttr('actual') == 4.0)
 	gt1.setParent(None)
 	assert(pt1.getAttr('actual') == 0.0)
-	assert(gt1.getPath() == ['gt1'])
+

@@ -123,6 +123,41 @@ class MNode(object):
 			self.__children.append(child)
 		self.notify('childAdded', child)
 
+	def __getstate__(self):
+		privatePrefix = '_MNode'
+
+		d = self.__dict__.copy()
+
+		# Remove observers that may not be appropriate to be serialized eg. GUI classes
+		observers = self.__observers[:]
+		observers = [x for x in observers if isinstance(x, MNode) and x != _serializeRoot]
+		d[privatePrefix + '__observers'] = observers
+
+		# Serialize only the subtree so that it won't pickle every hierarchy from the global root
+		if d[privatePrefix + '__parent'] == _serializeRoot:
+			d[privatePrefix + '__parent'] = None
+		return d
+
+	def __setstate__(self, d):
+		self.__dict__ = d
+
+	@staticmethod
+	def serialize(mNodes, root=None):
+		"""
+		Serialize the node network (mNodes) rooted at the given root.
+		root should not be in mNodes
+		Observers are not pickled unless it's in the network
+		"""
+		global _serializeRoot
+		import cPickle as pickle
+		_serializeRoot = root
+		try:
+			return pickle.dumps(mNodes)
+		finally:
+			_serializeRoot = None
+
+_serializeRoot = None
+
 if __name__ == '__main__':
 
 	class NamedMNode(MNode):

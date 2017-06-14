@@ -2,17 +2,27 @@ from Qt import QtGui, QtWidgets, QtCompat
 from gnode.gnode_main import GScene, GView, GRectNode
 from gnode.gnode_utils import PaintStyle
 from mtask import MTask
+from nody_utils.mergeableDict import DynamicMergeableDict
 
 # ======================================================
 # Prefix 'G' means 'GUI'
 class GTask(GRectNode):
 
+	style = {
+	'bgPaint' : {
+		'col' : [240, 240, 240, 255],
+		'colSel' : [240, 240, 240, 255],
+		}
+	}
+
+	_paintStyle = PaintStyle(style, False)
+	_paintStyle.setBaseStyle(GRectNode._paintStyle)
+
+	_config = DynamicMergeableDict(shapeRoundRadius=1)
+	_config.setBase(GRectNode._config)
+
 	def __init__(self, scene, mTask):
 		super(GTask, self).__init__(scene, 0, 0, 0, 0)
-
-		base = self._paintStyle
-		self._paintStyle = PaintStyle()
-		self._paintStyle.setBaseStyle(base)
 
 		self.__mTask = mTask
 		self.__mTask.addObserver(self)
@@ -125,21 +135,26 @@ class GTask(GRectNode):
 
 # ======================================================
 if __name__ == '__main__':
-	root = MTask()
-	pt1 = MTask(root, 'pt1')
-	pt2 = MTask(root,'pt2')
-	ct1 = MTask(pt1, 'ct1')
-	ct2 = MTask(pt1, 'ct2')
-	gt1 = MTask(ct2, 'gt1')
 
-	pt1.setAttr('pos', (0, 200))
-	pt2.setAttr('pos', (300, 200))
-	ct1.setAttr('pos', (0, 400))
-	ct2.setAttr('pos', (300, 400))
-	gt1.setAttr('pos', (300, 600))
+	def createNetwork():
+		root = MTask()
+		pt1 = MTask(root)
+		pt2 = MTask(root)
+		ct1 = MTask(pt1)
+		ct2 = MTask(pt1)
+		gt1 = MTask(ct2)
 
-	ct1.setAttr('actual', 3.0)
-	gt1.setAttr('actual', 4.0)
+		pt1.setAttr('pos', (0, 60))
+		pt2.setAttr('pos', (170, 60))
+		ct1.setAttr('pos', (0, 120))
+		ct2.setAttr('pos', (170, 120))
+		gt1.setAttr('pos', (170, 180))
+
+		ct1.setAttr('actual', 3.0)
+		gt1.setAttr('actual', 4.0)
+
+		from mnode.mnode_main import MNode
+		return MNode.serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	global app, view
 
@@ -149,12 +164,17 @@ if __name__ == '__main__':
 	scene = GScene()
 	view = GView(None, scene)
 
-	rootN = GTask(scene, root)
-	pt1N = GTask(scene, pt1)
-	pt2N = GTask(scene, pt2)
-	ct1N = GTask(scene, ct1)
-	ct2N = GTask(scene, ct2)
-	gt1N = GTask(scene, gt1)
+	pickledNetwork = createNetwork()
+	import cPickle as pickle
+	network1 = pickle.loads(pickledNetwork)
+	network2 = pickle.loads(pickledNetwork)
+
+	for node in network1:
+		GTask(scene, node)
+	for node in network2:
+		gt = GTask(scene, node)
+		pos = node.getAttr('pos')
+		node.setAttr('pos', (pos[0] + 360, pos[1] + 10))
 
 	view.show()
 	app.exec_()

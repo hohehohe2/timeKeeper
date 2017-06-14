@@ -256,7 +256,7 @@ class GRectNode(GNodeBase):
 		minSize=[20, 20],
 		widgetLayoutType='vertical', # 'horizontal', 'vertical', or 'none'
 		widgetlayoutSpacing=1,
-		margins = (3, 8, 3, 3) # left, top, right, bottom
+		margins = (10, 3, 3, 3) # left, top, right, bottom
 		)
 
 	def __init__(self, scene, x, y, width, height):
@@ -266,6 +266,7 @@ class GRectNode(GNodeBase):
 		self.__setWidthHeight(width, height)
 		self.setAcceptHoverEvents(True)
 		self.__setLayout()
+		self.__setDraggableCursor(False, False)
 
 	def addWidget(self, widget):
 		proxy = QtWidgets.QGraphicsProxyWidget(parent=self)
@@ -312,7 +313,7 @@ class GRectNode(GNodeBase):
 		elif isDraggableY:
 			self.setCursor(QtCore.Qt.SizeVerCursor)
 		else:
-			self.setCursor(QtCore.Qt.ArrowCursor)
+			self.setCursor(QtCore.Qt.ClosedHandCursor)
 
 	def __setWidthHeight(self, width, height):
 		minSizeX, minSizeY = self._config['minSize']
@@ -331,7 +332,7 @@ class GRectNode(GNodeBase):
 
 		if layout:
 			layout.setSpacing(self._config['widgetlayoutSpacing'])
-			layout.setContentsMargins(3, 8, 3, 3)
+			layout.setContentsMargins(*self._config['margins'])
 
 	# Qt callbacks
 
@@ -371,7 +372,7 @@ class GRectNode(GNodeBase):
 	def mouseReleaseEvent(self, event):
 		super(GRectNode, self).mouseReleaseEvent(event)
 		self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
-		self.setCursor(QtCore.Qt.ArrowCursor)
+		self.setCursor(QtCore.Qt.ClosedHandCursor)
 
 	def hoverEnterEvent(self, event):
 		super(GRectNode, self).hoverEnterEvent(event)
@@ -383,7 +384,7 @@ class GRectNode(GNodeBase):
 
 	def hoverLeaveEvent(self, event):
 		super(GRectNode, self).hoverLeaveEvent(event)
-		self.setCursor(QtCore.Qt.ArrowCursor)
+		self.setCursor(QtCore.Qt.ClosedHandCursor)
 
 # ------------------------------------------------------
 class GDotNode(GNodeBase):

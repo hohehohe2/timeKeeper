@@ -23,10 +23,11 @@ _defaultStyle = {
 # ------------------------------------------------------
 class PaintStyle(object):
 
-	def __init__(self, style=_defaultStyle):
+	def __init__(self, style=_defaultStyle, doUpdate=True):
 		self.__styleInfo = DynamicMergeableDict()
-		self.__styleInfo.update(style)	
-		self.__update()
+		self.__styleInfo.update(style)
+		if doUpdate:
+			self.__update()
 
 	def setBaseStyle(self, baseConfig):
 		self.__styleInfo.setBase(baseConfig.__styleInfo)
