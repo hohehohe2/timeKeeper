@@ -1,14 +1,12 @@
 # Timekeeper GUI node
 
 from Qt import QtGui, QtWidgets, QtCompat
-from gnode.gnode_main import GScene, GView, GRectNode
+from gnode.gnode_main import GRectNode, GDotNode
 from gnode.gnode_utils import PaintStyle
-from mtask import MTask
 from nody_utils.mergeableDict import DynamicMergeableDict
 
 # ======================================================
-# Prefix 'G' means 'GUI'
-class GTask(GRectNode):
+class GTaskNode(GRectNode):
 
 	style = {
 	'bgPaint' : {
@@ -23,11 +21,11 @@ class GTask(GRectNode):
 	_config = DynamicMergeableDict(shapeRoundRadius=1)
 	_config.setBase(GRectNode._config)
 
-	def __init__(self, scene, mTask):
-		super(GTask, self).__init__(scene, 0, 0, 0, 0)
+	def __init__(self, scene, mTaskNode):
+		super(GTaskNode, self).__init__(scene)
 
-		self.__mTask = mTask
-		self.__mTask.addObserver(self)
+		self.__mTaskNode = mTaskNode
+		mTaskNode.addObserver(self)
 
 		self.__loadUiFile()
 		self.__setInitNodeState()
@@ -37,41 +35,32 @@ class GTask(GRectNode):
 		self.__isDescriptionChanging = False
 
 	def delete(self):
-		# To deal with multiple GTask nodes observing the same MTask node,
+		# To deal with multiple GTaskNode nodes observing the same MTaskNode,
 		# we do not delete this UI node directly, instead we delete the model node
-		# This GTask instance is deleted when the model node deletion is observed
-		self.__mTask.delete()
+		# This GTaskNode instance is deleted when the model node deletion is observed
+		self.__mTaskNode.delete()
 
-	def getMTask(self):
+	def getMTaskNode(self):
 		"""
-		Get the MTask node this object is for
+		Get the MTaskNode this object is for
 		"""
-		return self.__mTask
-
-	def _onNotify(self, notifier, event, data):
-		if event in 'attrChanged':
-			# The only node this object is observing is an MTask which this GUI node is for
-			self.__onAttrChanged(notifier, data)
-		elif event == 'deleted':
-			self.__onMTaskDeleted()
-		elif event in ['childAdded', 'childRemoved']:
-			self.__setActualEnabled()
+		return self.__mTaskNode
 
 	def __loadUiFile(self):
 		import os, inspect
-		dirname = os.path.dirname(inspect.getabsfile(GTask))
+		dirname = os.path.dirname(inspect.getabsfile(GTaskNode))
 		uiFilePath = os.path.join(dirname, 'nodeLook.ui')
 		self.__ui = QtCompat.loadUi(uiFilePath)
 		self.addWidget(self.__ui)
 
 	def __setInitNodeState(self):
-		mTask = self.__mTask
+		mTaskNode = self.__mTaskNode
 		ui = self.__ui
-		self.setPos(*mTask.getAttr('pos'))
-		self.resize(*mTask.getAttr('size'))
-		ui.estimatedSB.setValue(mTask.getAttr('estimated'))
-		ui.actualSB.setValue(mTask.getAttr('actual'))
-		ui.descriptionTB.setText(mTask.getAttr('description'))
+		self.setPos(*mTaskNode.getAttr('pos'))
+		self.resize(*mTaskNode.getAttr('size'))
+		ui.estimatedSB.setValue(mTaskNode.getAttr('estimated'))
+		ui.actualSB.setValue(mTaskNode.getAttr('actual'))
+		ui.descriptionTB.setText(mTaskNode.getAttr('description'))
 		self.__setActualEnabled()
 
 	def __connectSignalSlot(self):
@@ -82,16 +71,25 @@ class GTask(GRectNode):
 
 		self.geometryChanged.connect(self.__onGeometryChanged)
 
-	def __onMTaskDeleted(self):
-		super(GTask, self).delete()
+	def __onMTaskNodeDeleted(self):
+		super(GTaskNode, self).delete()
 
-	# MTask event callbacks.
+	# MNode event callbacks.
 
-	def __onAttrChanged(self, mTask, data):
+	def _onNotify(self, notifier, event, data):
+		if event in 'attrChanged':
+			# The only node this object is observing is an MTaskNode which this GUI node is for
+			self.__onAttrChanged(notifier, data)
+		elif event == 'deleted':
+			self.__onMTaskNodeDeleted()
+		elif event in ['childAdded', 'childRemoved']:
+			self.__setActualEnabled()
+
+	def __onAttrChanged(self, mTaskNode, data):
 		attrName, oldValue, newValue = data
 
 		# Avoid potential infinite loop
-		# set widget -> qt callback -> MTask callback -> notify event -> set widget ...
+		# set widget -> qt callback -> MTaskNode callback -> notify event -> set widget ...
 		if attrName in self.__processingAttrNames:
 			return
 		self.__processingAttrNames.add(attrName)
@@ -114,7 +112,7 @@ class GTask(GRectNode):
 		self.update()
 
 	def __setActualEnabled(self):
-		hasChild = bool(self.__mTask.getChildren())
+		hasChild = bool(self.__mTaskNode.getChildren())
 		self.__ui.actualSB.setEnabled(not hasChild)
 
 	# Qt graphicsWidget callbacks
@@ -122,80 +120,66 @@ class GTask(GRectNode):
 	def __onGeometryChanged(self):
 		pos = self.pos()
 		size = self.size()
-		self.__mTask.setAttr('pos', (pos.x(), pos.y()))
-		self.__mTask.setAttr('size', (size.width(), size.height()))
+		self.__mTaskNode.setAttr('pos', (pos.x(), pos.y()))
+		self.__mTaskNode.setAttr('size', (size.width(), size.height()))
 
 	# Qt widget callbacks
 
 	def __onEstimatedChanged(self, value):
-		self.__mTask.setAttr('estimated', value)
+		self.__mTaskNode.setAttr('estimated', value)
 
 	def __onActualChanged(self, value):
-		self.__mTask.setAttr('actual', value)
+		self.__mTaskNode.setAttr('actual', value)
 
 	def __onDescriptionChanged(self):
 		text = self.__ui.descriptionTB.toHtml()
 		self.__isDescriptionChanging = True
 		try:
-			self.__mTask.setAttr('description', text)
+			self.__mTaskNode.setAttr('description', text)
 		finally:
 			self.__isDescriptionChanging = False
 
+# ------------------------------------------------------
+class GTaskDotNode(GDotNode):
 
-# ======================================================
-class GCanvas(object):
+	def __init__(self, scene, mDotNode):
+		super(GTaskDotNode, self).__init__(scene)
+		self.__mDotNode = mDotNode
+		mDotNode.addObserver(self)
+		self.__isPosChanging = False
 
-	def __init__(self, rootMTask=None):
-		self.__scene = GScene()
-		self.__view = GView(None, scene)
-		self.show(rootMTask)
+	# MNode event callback.
 
-	def clear(self):
-		self.__scene.clear()
+	def _onNotify(self, notifier, event, data):
 
-	# def show(self, rootMTask):
-	# 	"""
-	# 	Show network under rootMTask 
-	# 	"""
-	# 	self.clear()
-	# 	self.__rootMTask = rootMTask
-	# 	if not rootMTask:
-	# 		return
+		if event in 'attrChanged' and data[0] == 'pos':
 
-	# 	for child in rootMTask.
+			if self.__isPosChanging:
+				return
+			self.__isPosChanging = True
 
-	# 	self.__view.show()
+			try:
+				self.setPos(*mTaskNode.getAttr('pos'))
+			finally:
+				self.__isPosChanging = False
 
-	# 	pickledNetwork = createNetwork()
-	# 	import cPickle as pickle
-	# 	network1 = pickle.loads(pickledNetwork)
-	# 	network2 = pickle.loads(pickledNetwork)
+	# Qt graphicsWidget callbacks
 
-	# 	for node in network1:
-	# 		GTask(scene, node)
-	# 	for node in network2:
-	# 		gt = GTask(scene, node)
-	# 		pos = node.getAttr('pos')
-	# 		node.setAttr('pos', (pos[0] + 360, pos[1] + 10))
-
-	# 	view.show()
-
-	# @staticmethod
-	# def serialize(gTasks, rootGTask=None):
-	# 	"""
-	# 	Serialize the underlining models
-	# 	"""
+	def __onGeometryChanged(self):
+		pos = self.pos()
+		self.__mTaskNode.setAttr('pos', (pos.x(), pos.y()))
 
 # ======================================================
 if __name__ == '__main__':
 
 	def createNetwork():
-		root = MTask()
-		pt1 = MTask(root)
-		pt2 = MTask(root)
-		ct1 = MTask(pt1)
-		ct2 = MTask(pt1)
-		gt1 = MTask(ct2)
+		from mtask import MTaskNode
+		root = MTaskNode()
+		pt1 = MTaskNode(root)
+		pt2 = MTaskNode(root)
+		ct1 = MTaskNode(pt1)
+		ct2 = MTaskNode(pt1)
+		gt1 = MTaskNode(ct2)
 
 		pt1.setAttr('pos', (0, 60))
 		pt2.setAttr('pos', (170, 60))
@@ -214,6 +198,7 @@ if __name__ == '__main__':
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
 
+	from gnode.gnode_main import GScene, GView
 	scene = GScene()
 	view = GView(None, scene)
 
@@ -223,9 +208,9 @@ if __name__ == '__main__':
 	network2 = pickle.loads(pickledNetwork)
 
 	for node in network1:
-		GTask(scene, node)
+		GTaskNode(scene, node)
 	for node in network2:
-		gt = GTask(scene, node)
+		gt = GTaskNode(scene, node)
 		pos = node.getAttr('pos')
 		node.setAttr('pos', (pos[0] + 360, pos[1] + 10))
 

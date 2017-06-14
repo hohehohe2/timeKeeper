@@ -1,28 +1,23 @@
-"""
-Timekeeper model
-
-We use MTask for time keeper node, reuse MNodeDot for dot node, and Python tuple for connection
-Just like Maya, nodes and connections are handled separately
-"""
-
 from mnode.mnode_main import MNode
 
 # ======================================================
-# Prefix 'M' means 'Model'
-class MTask(MNode):
+class MTaskNode(MNode):
 	def __init__(self, parent=None):
-		super(MTask, self).__init__(parent)
+		super(MTaskNode, self).__init__(parent)
 		self.setAttr('description', '') # Long description
 		self.setAttr('estimated', 0) # Estimated time
 		self.setAttr('actual', 0) # Actual time needed
 		self.setAttr('status', 'waiting') # 'waiting', 'wip', 'done'
 		self.setAttr('isCurrent', False) # True if now working on it
 
+		self.setAttr('pos', (0, 0))
+		self.setAttr('size', (0, 0))
+
 		self.addObserver(self)
 
 	def setParent(self, parent):
 		oldParent = self.getParent()
-		super(MTask, self).setParent(parent)
+		super(MTaskNode, self).setParent(parent)
 		if oldParent:
 			self.removeObserver(oldParent)
 		if parent:
@@ -37,21 +32,28 @@ class MTask(MNode):
 	def __updateActual(self):
 		sumChildActuals = 0
 		for child in self.getChildren():
-			sumChildActuals += child.getAttr('actual')
+			if child.hasAttr('actual'):
+				sumChildActuals += child.getAttr('actual')
 		self.setAttr('actual', sumChildActuals)
+
+# ------------------------------------------------------
+class MTaskDotNode(MNode):
+	def __init__(self, parent=None):
+		super(MTaskDotNode, self).__init__(parent)
+		self.setAttr('pos', (0, 0))
 
 # ======================================================
 if __name__ == '__main__':
 
 	def createNetwork():
-		root = MTask()
-		pt1 = MTask(root)
-		pt2 = MTask(root)
-		ct1 = MTask(pt1)
-		ct2 = MTask(pt1)
-		gt1 = MTask(ct2)
+		root = MTaskNode()
+		pt1 = MTaskNode(root)
+		pt2 = MTaskNode(root)
+		ct1 = MTaskNode(pt1)
+		ct2 = MTaskNode(pt1)
+		gt1 = MTaskNode(ct2)
 
-		from mnode.mnode_main import MNode, serialize
+		from mnode.mnode_main import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	pickledNetwork = createNetwork()

@@ -259,7 +259,7 @@ class GRectNode(GNodeBase):
 		margins = (10, 3, 3, 3) # left, top, right, bottom
 		)
 
-	def __init__(self, scene, x, y, width, height):
+	def __init__(self, scene, x=0, y=0, width=40, height=40):
 		super(GRectNode, self).__init__(scene)
 
 		self.setPos(x, y)
@@ -394,7 +394,7 @@ class GDotNode(GNodeBase):
 		dotRadius=10,
 		)
 
-	def __init__(self, scene, x, y):
+	def __init__(self, scene, x=0, y=0):
 		super(GDotNode, self).__init__(scene)
 		self.setPos(x - self.__radius(), y - self.__radius())
 

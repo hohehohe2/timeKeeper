@@ -1,16 +1,12 @@
 # ======================================================
 # Gui independent hierarchical node network model
 """
-It has a base calss _MNodeBase and a couple of concrete subclasses MNode, MNodeDot.
-
-We use MNode for regular node, MNodeDot for dot node, and Python tuple for connection
-
 It's not worth a class to model the whole network, we can just
-have _MNodeBase tree and list of tuples for connections
+have MNode tree and list of tuples for connections
 Just like Maya, nodes and connections can be handled separately
 
 
-An _MNodeBase
+An MNode
 	- has attributes
 	- can be observed
 	- can observe other nodes
@@ -44,11 +40,11 @@ A node can observe itself;
 """
 
 NOT_EXIST = object()
-class _MNodeBase(object):
+class MNode(object):
 
 	def __init__(self, parent=None):
 		self.__attr = {} # {attrName: value}
-		self.__observers = [] # List of _MNodeBases that are observing this object
+		self.__observers = [] # List of MNodes that are observing this object
 		self.__parent = None
 		self.__children = []
 
@@ -83,6 +79,9 @@ class _MNodeBase(object):
 
 	def getAttr(self, name):
 		return self.__attr[name]
+
+	def hasAttr(self, name):
+		return name in self.__attr
 
 	def getAttrDefault(self, name, default=None):
 		return self.__attr.get(name, default)
@@ -132,7 +131,7 @@ class _MNodeBase(object):
 		self._notify('childAdded', child)
 
 	def __getstate__(self):
-		privatePrefix = '_MNodeBase'
+		privatePrefix = '_MNode'
 
 		d = self.__dict__.copy()
 
@@ -141,11 +140,11 @@ class _MNodeBase(object):
 		# relationship consistent.
 
 		# For efficiency we just check if self is _serializeRoot and exclude if it is a root
-		# expecting it prevents serializing the while _MNodeBase tree through Python reference but
-		# it doesn't work if we have additional _MNodeBase observers outside of the tree
+		# expecting it prevents serializing the while MNode tree through Python reference but
+		# it doesn't work if we have additional MNode observers outside of the tree
 		def excludeNonNetwork(candidates, attrName):
 			candCopy = candidates[:]
-			candCopy = [x for x in candCopy if isinstance(x, _MNodeBase) and x != _serializeRoot]
+			candCopy = [x for x in candCopy if isinstance(x, MNode) and x != _serializeRoot]
 			d[privatePrefix + attrName] = candCopy
 
 		excludeNonNetwork(self.__observers, '__observers')
@@ -158,56 +157,40 @@ class _MNodeBase(object):
 	def __setstate__(self, d):
 		self.__dict__ = d
 
+	def _onNotify(self, notifier, event, data):
+		pass
+
 # ======================================================
-class MNode(_MNodeBase):
-	def __init__(self, parent=None):
-		super(MNode, self).__init__(parent)
-		self.setAttr('pos', (0, 0))
-		self.setAttr('size', (0, 0))
-
-	def getType(self):
-		return 'node'
-
-# ------------------------------------------------------
-class MNodeDot(_MNodeBase):
-	def __init__(self, parent=None):
-		super(MNodeDot, self).__init__(parent)
-		self.setAttr('pos', (0, 0))
-
-	def getType(self):
-		return 'dot'
-
-# ------------------------------------------------------
 _serializeRoot = None
-def serialize(mNodeBases, root=None):
+def serialize(mNodes, root=None):
 	"""
-	Serialize the node tree(mNodeBases) rooted at the given root.
-	root should not be in mNodeBases
+	Serialize the node tree(mNodes) rooted at the given root.
+	root should not be in mNodes
 	Observers are not pickled unless it's in the network
 	"""
 	global _serializeRoot
 	import cPickle as pickle
 	_serializeRoot = root
 	try:
-		return pickle.dumps(mNodeBases)
+		return pickle.dumps(mNodes)
 	finally:
 		_serializeRoot = None
 
 # ======================================================
 if __name__ == '__main__':
 
-	class NamedMNode(_MNodeBase):
+	class NamedMNode(MNode):
 		def __init__(self, name):
 			super(NamedMNode, self).__init__()
 			self.setAttr('name', name)
 		def __str__(self):
 			return self.getAttr('name')
 
-	class ObservingMNode(NamedMNode):
+	class ObservingNode(NamedMNode):
 		def _onNotify(self, notifier, event, data):
 			print notifier.getAttr('name'), event, data	
 
-	a = ObservingMNode('a')
+	a = ObservingNode('a')
 
 	b = NamedMNode('b')
 	c = NamedMNode('c')
