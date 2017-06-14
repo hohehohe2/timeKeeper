@@ -115,7 +115,7 @@ class GTaskNode(GRectNode):
 		hasChild = bool(self.__mTaskNode.getChildren())
 		self.__ui.actualSB.setEnabled(not hasChild)
 
-	# Qt graphicsWidget callbacks
+	# Qt GraphicsWidget callbacks
 
 	def __onGeometryChanged(self):
 		pos = self.pos()
@@ -163,7 +163,7 @@ class GTaskDotNode(GDotNode):
 			finally:
 				self.__isPosChanging = False
 
-	# Qt graphicsWidget callbacks
+	# Qt GraphicsWidget callbacks
 
 	def __onGeometryChanged(self):
 		pos = self.pos()
