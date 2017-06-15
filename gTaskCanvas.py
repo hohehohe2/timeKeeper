@@ -1,11 +1,10 @@
 from gnode.gnode_main import GCanvas, GConnection
 
-from nody_utils.treeNode import MTreeNode
 from mtask import MTaskNode, MTaskDotNode
 from gtask import GTaskNode, GTaskDotNode
 
 # ======================================================
-class GTaskTreeNodeCanvas(GCanvas):
+class GTaskCanvas(GCanvas):
 
 	_classMapper = {
 		MTaskNode : GTaskNode,
@@ -13,20 +12,18 @@ class GTaskTreeNodeCanvas(GCanvas):
 		}
 
 	def __init__(self, *args, **kargs):
-		super(GTaskTreeNodeCanvas, self).__init__(*args, **kargs)
-		self.__rootMTreeNode = MTreeNode()
+		super(GTaskCanvas, self).__init__(*args, **kargs)
+		self.__rootTaskNode = MTaskNode()
 
-	def resetNetwork(self, rootMTreeNode, connections):
+	def resetNetwork(self, rootTaskNode, connections):
 		"""
-		Make this canvas represents the network under rootMTreeNode
-		connections where either of the node is not a direct child of rootMTreeNode are ignored
+		Make this canvas represents the network under rootTaskNode
+		connections where either of the node is not a direct child of rootTaskNode are ignored
 		_classMapper is used to find the appropriate GNode sub class for each mTreeNode
 		"""
-		assert(isinstance(rootMTreeNode, MTreeNode))
-
 		self.clear()
-		self.__rootMTreeNode = rootMTreeNode
-		self.addNetwork(rootMTreeNode.getChildren(), connections)
+		self.__rootTaskNode = rootTaskNode
+		self.addNetwork(rootTaskNode.getChildren(), connections)
 
 	def addNetwork(self, mTreeNodes, connections):
 		"""
@@ -40,7 +37,7 @@ class GTaskTreeNodeCanvas(GCanvas):
 		for mTreeNode in mTreeNodes:
 			if mTreeNode in items:
 				continue
-			if mTreeNode.getParent() != self.__rootMTreeNode:
+			if mTreeNode.getParent() != self.__rootTaskNode:
 				continue
 			gNodeClass = self._classMapper[mTreeNode.__class__]
 			gNode = gNodeClass(self, mTreeNode) # instanciate GNode sub class instance for mTreeNode
@@ -81,7 +78,7 @@ if __name__ == '__main__':
 
 	app = QtWidgets.QApplication(sys.argv)
 
-	canvas = GTaskTreeNodeCanvas()
+	canvas = GTaskCanvas()
 
 	pickledNetwork = createNetwork()
 	import cPickle as pickle

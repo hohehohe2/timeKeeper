@@ -40,19 +40,14 @@ MTaskNode, MTaskDotNode
 			MTaskDotNode: Dot model node for time keeper
 
 # ------------------------------------------------------
-GTaskNode, GTaskDotNode
+GTaskNode, GTaskDotNode, GTaskCanvas
 
 - Gui nodes for time keeper application (though GTaskDotNode can be used for any application)
+- GTasKCanvas creates GNode subclasses from MTreeNode subclasses
 
 		GRectNode
 			GTaskNode: Regular task GUI node
 		GDotNode
 			GTaskDotNode: Dot task GUI node
-
-# ------------------------------------------------------
-GTaskTreeNodeCanvas
-
-- Offers MTreeNode subclass -> GNode subclass mapping
-
 		GCanvas
-			GTaskTreeNodeCanvas: GCanvas for timekeeper application
+			GTaskCanvas: GCanvas for timekeeper application
