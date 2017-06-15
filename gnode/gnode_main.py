@@ -432,13 +432,12 @@ class GDotNode(GNodeBase):
 
 # ======================================================
 if __name__ == '__main__':
-	global app, view
+	global app
 
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
 
 	canvas = GCanvas()
-	view = GView(None, canvas)
 
 	config = {'shapeRoundRadius':4}
 	GRectNode.updateStyle(canvas, config)
@@ -471,7 +470,7 @@ if __name__ == '__main__':
 	pb.destroyed.connect(cb4)
 	#n1.delete(); # You can manually delete the node in the UI by selecting it and hit delete key
 
-	view.show()
+	canvas.show()
 
 	app.exec_()
 

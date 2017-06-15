@@ -74,7 +74,7 @@ if __name__ == '__main__':
 		from nody_utils.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
-	global app, view
+	global app
 
 	app = QtWidgets.QApplication(sys.argv)
 

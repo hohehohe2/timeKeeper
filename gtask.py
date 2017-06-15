@@ -193,7 +193,7 @@ if __name__ == '__main__':
 		from nody_utils.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
-	global app, view
+	global app
 
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
@@ -213,5 +213,5 @@ if __name__ == '__main__':
 		pos = node.getAttr('pos')
 		node.setAttr('pos', (pos[0] + 360, pos[1] + 10))
 
-	view.show()
+	canvas.show()
 	app.exec_()
