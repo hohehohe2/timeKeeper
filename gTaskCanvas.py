@@ -1,7 +1,7 @@
 from gnode.gnode_main import GCanvas, GConnection
 
-from mtask import MTaskNode, MTaskDotNode
-from gtask import GTaskNode, GTaskDotNode
+from taskModel import MTaskNode, MTaskDotNode
+from taskGNodes import GTaskNode, GTaskDotNode
 
 # ======================================================
 class GTaskCanvas(GCanvas):

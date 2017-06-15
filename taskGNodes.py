@@ -173,7 +173,7 @@ class GTaskDotNode(GDotNode):
 if __name__ == '__main__':
 
 	def createNetwork():
-		from mtask import MTaskNode
+		from taskModel import MTaskNode
 		root = MTaskNode()
 		pt1 = MTaskNode(root)
 		pt2 = MTaskNode(root)
