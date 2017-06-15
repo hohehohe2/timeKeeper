@@ -1,9 +1,9 @@
 # Timekeeper GUI node
 
 from Qt import QtGui, QtWidgets, QtCompat
-from nodeViewFramework.gnode_main import GRectNode, GDotNode, GConnection
+from nodeViewFramework.frameworkMain import GRectNode, GDotNode, GConnection
 from nodeViewFramework.paintStyle import PaintStyle
-from nodeViewFramework.mergeableDict import DynamicMergeableDict
+from utils.mergeableDict import DynamicMergeableDict
 
 # ======================================================
 class GTaskNode(GRectNode):
@@ -69,7 +69,7 @@ class GTaskNode(GRectNode):
 		hasChild = bool(self.__mTaskNode.getChildren())
 		self.__ui.actualSB.setEnabled(not hasChild)
 
-	# MTreeNode event callbacks.
+	# TreeNode event callbacks.
 
 	def _onNotify(self, notifier, event, data):
 		if event in 'attrChanged':
@@ -142,7 +142,7 @@ class GTaskDotNode(GDotNode):
 	def delete(self):
 		self.__mTaskDotNode.delete()
 
-	# MTreeNode event callbacks.
+	# TreeNode event callbacks.
 
 	def _onNotify(self, notifier, event, data):
 
@@ -194,7 +194,7 @@ if __name__ == '__main__':
 		ct1.setAttr('actual', 3.0)
 		gt1.setAttr('actual', 4.0)
 
-		from taskModel import serialize
+		from utils.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	global app
@@ -202,7 +202,7 @@ if __name__ == '__main__':
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
 
-	from nodeViewFramework.gnode_main import GCanvas
+	from nodeViewFramework.frameworkMain import GCanvas
 	canvas = GCanvas()
 
 	pickledNetwork = createNetwork()

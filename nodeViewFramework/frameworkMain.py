@@ -7,7 +7,7 @@
 
 import copy
 from Qt import QtGui, QtCore, QtWidgets
-from mergeableDict import DynamicMergeableDict
+from utils.mergeableDict import DynamicMergeableDict
 from paintStyle import PaintStyle, PaintConfigMixin
 
 

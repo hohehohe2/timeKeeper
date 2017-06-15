@@ -18,7 +18,7 @@ GCanvas, GNodeBase, GRectNode, GDotNode, GConnection
 				GDotNode: Dot node
 
 # ------------------------------------------------------
-MTreeNode
+TreeNode
 
 - Model components, no sense of GUI
 - Has attribute
@@ -28,14 +28,14 @@ MTreeNode
 - For general purpose
 
 		object(Python)
-			MTreeNode: Base class of a model nodes with attribute, event notification, grouping
+			TreeNode: Base class of a model nodes with attribute, event notification, grouping
 
 # ======================================================
 MTaskNode, MTaskDotNode
 
 - Model nodes for time keeper application (though MTaskDotNode can be used for any application)
 
-		MTreeNode
+		TreeNode
 			MTaskNode: Regular task model node for time keeper 
 			MTaskDotNode: Dot model node for time keeper
 
@@ -43,7 +43,7 @@ MTaskNode, MTaskDotNode
 GTaskNode, GTaskDotNode, GTaskCanvas
 
 - Gui nodes for time keeper application (though GTaskDotNode can be used for any application)
-- GTasKCanvas creates GNode subclasses from MTreeNode subclasses
+- GTasKCanvas creates GNode subclasses from TreeNode subclasses
 
 		GRectNode
 			GTaskNode: Regular task GUI node

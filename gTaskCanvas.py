@@ -1,4 +1,4 @@
-from nodeViewFramework.gnode_main import GCanvas, GConnection
+from nodeViewFramework.frameworkMain import GCanvas, GConnection
 
 from taskModel import MTaskNode, MTaskDotNode
 from taskGNodes import GTaskNode, GTaskDotNode
@@ -19,38 +19,38 @@ class GTaskCanvas(GCanvas):
 		self.__rootTaskNode = rootTaskNode
 		self.addNetwork(rootTaskNode.getChildren(), connections)
 
-	def addNetwork(self, mTreeNodes, connections):
+	def addNetwork(self, mNodes, connections):
 		"""
 		Add a network to the current canvas.
-		MTreeNodes which parent is not the current root are ignored
+		MNodes which parent is not the current root are ignored
 		connections where either of the node is not a direct child of current root Mnode are ignored
 		"""
 
-		# Used to find the appropriate GNode sub class for each mTreeNode
+		# Used to find the appropriate GNode sub class for each mNode
 		classMapper = {
 			MTaskNode : GTaskNode,
 			MTaskDotNode : GTaskDotNode,
 			}
 
 		items = self.items()
-		mTreeNodeToGNode = {}
-		for mTreeNode in mTreeNodes:
+		mNodeToGNode = {}
+		for mNode in mNodes:
 
-			if mTreeNode in items:
+			if mNode in items:
 				continue
 
-			if mTreeNode.getParent() != self.__rootTaskNode:
+			if mNode.getParent() != self.__rootTaskNode:
 				continue
 
-			gNodeClass = classMapper[mTreeNode.__class__]
-			gNode = gNodeClass(self, mTreeNode) # instanciate GNode sub class instance for mTreeNode
+			gNodeClass = classMapper[mNode.__class__]
+			gNode = gNodeClass(self, mNode) # instanciate GNode sub class instance for mNode
 
-			mTreeNodeToGNode[mTreeNode] = gNode
+			mNodeToGNode[mNode] = gNode
 
 		for connectionFrom, connectionTo in connections:
-			assert(connectionFrom in mTreeNodes)
-			assert(connectionTo in mTreeNodes)
-			GConnection(mTreeNodeToGNode[connectionFrom], mTreeNodeToGNode[connectionTo])
+			assert(connectionFrom in mNodes)
+			assert(connectionTo in mNodes)
+			GConnection(mNodeToGNode[connectionFrom], mNodeToGNode[connectionTo])
 
 # ======================================================
 if __name__ == '__main__':
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 		ct1.setAttr('actual', 3.0)
 		gt1.setAttr('actual', 4.0)
 
-		from taskModel import serialize
+		from utils.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	global app
