@@ -6,20 +6,14 @@ from gtask import GTaskNode, GTaskDotNode
 # ======================================================
 class GTaskCanvas(GCanvas):
 
-	_classMapper = {
-		MTaskNode : GTaskNode,
-		MTaskDotNode : GTaskDotNode,
-		}
-
 	def __init__(self, *args, **kargs):
 		super(GTaskCanvas, self).__init__(*args, **kargs)
 		self.__rootTaskNode = MTaskNode()
 
 	def resetNetwork(self, rootTaskNode, connections):
 		"""
-		Make this canvas represents the network under rootTaskNode
+		Make this canvas show the network under rootTaskNode
 		connections where either of the node is not a direct child of rootTaskNode are ignored
-		_classMapper is used to find the appropriate GNode sub class for each mTreeNode
 		"""
 		self.clear()
 		self.__rootTaskNode = rootTaskNode
@@ -30,17 +24,27 @@ class GTaskCanvas(GCanvas):
 		Add a network to the current canvas.
 		MTreeNodes which parent is not the current root are ignored
 		connections where either of the node is not a direct child of current root Mnode are ignored
-		_classMapper is used to find the appropriate GNode sub class for each mTreeNode
 		"""
+
+		# Used to find the appropriate GNode sub class for each mTreeNode
+		classMapper = {
+			MTaskNode : GTaskNode,
+			MTaskDotNode : GTaskDotNode,
+			}
+
 		items = self.items()
 		mTreeNodeToGNode = {}
 		for mTreeNode in mTreeNodes:
+
 			if mTreeNode in items:
 				continue
+
 			if mTreeNode.getParent() != self.__rootTaskNode:
 				continue
-			gNodeClass = self._classMapper[mTreeNode.__class__]
+
+			gNodeClass = classMapper[mTreeNode.__class__]
 			gNode = gNodeClass(self, mTreeNode) # instanciate GNode sub class instance for mTreeNode
+
 			mTreeNodeToGNode[mTreeNode] = gNode
 
 		for connectionFrom, connectionTo in connections:
