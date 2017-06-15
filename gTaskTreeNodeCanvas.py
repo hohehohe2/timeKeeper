@@ -1,11 +1,12 @@
 from gnode.gnode_main import GCanvas, GConnection
 
-from treenodecanvas.treeNode import MTreeNode
+from nody_utils.treeNode import MTreeNode
 from mtask import MTaskNode, MTaskDotNode
 from gtask import GTaskNode, GTaskDotNode
 
 # ======================================================
 class GTaskTreeNodeCanvas(GCanvas):
+
 	_classMapper = {
 		MTaskNode : GTaskNode,
 		MTaskDotNode : GTaskDotNode,
@@ -73,7 +74,7 @@ if __name__ == '__main__':
 		ct1.setAttr('actual', 3.0)
 		gt1.setAttr('actual', 4.0)
 
-		from treenodecanvas.treeNode import serialize
+		from nody_utils.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	global app, view

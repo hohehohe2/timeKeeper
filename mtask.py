@@ -1,4 +1,4 @@
-from treenodecanvas.treeNode import MTreeNode
+from nody_utils.treeNode import MTreeNode
 
 # ======================================================
 class MTaskNode(MTreeNode):
@@ -53,7 +53,7 @@ if __name__ == '__main__':
 		ct2 = MTaskNode(pt1)
 		gt1 = MTaskNode(ct2)
 
-		from treenodecanvas.treeNode import serialize
+		from nody_utils.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	pickledNetwork = createNetwork()
