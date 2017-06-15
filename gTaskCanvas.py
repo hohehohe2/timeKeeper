@@ -8,7 +8,7 @@ class GTaskCanvas(GCanvas):
 
 	def __init__(self, *args, **kargs):
 		super(GTaskCanvas, self).__init__(*args, **kargs)
-		self.__rootTaskNode = MTaskNode()
+		self.__rootTaskNode = None
 
 	def resetNetwork(self, rootTaskNode, connections):
 		"""

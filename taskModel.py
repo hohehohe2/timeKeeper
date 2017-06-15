@@ -1,6 +1,58 @@
 from nody_utils.treeNode import MTreeNode
 
 # ======================================================
+class MTaskModel(object):
+
+	def __init__(self):
+		self.__theRoot = MTaskNode()
+		self.__connections = []
+		self.__observers = []
+
+	def addObserver(self, observer):
+		if not observer in self.__observers:
+			self.__observers.append(observer)
+
+	def removeObserver(self, observer):
+		if observer in self.__observers:
+			self.__observers.remove(observer)
+
+	def addTaskNode(self, parent=None):
+		if not parent:
+			parent = self.__theRoot
+
+		node = MTaskNode(parent)
+		node.addObserver(self) # To delect deletion
+		self.__onUpdate('task', node) # For canvas update, nodes notifies deletion by themselves
+
+		return node
+
+	def addTaskDotNode(self, parent):
+		if not parent:
+			parent = self.__theRoot
+
+		node = MTaskDotNode(parent)
+		node.addObserver(self) # To delect deletion
+		self.__onUpdate('dot', node) # For canvas update, nodes notifies deletion by themselves
+
+		return node
+
+	def addConnection(self, mNodeFrom, mNodeTo):
+		self.__connections.append((mNodeFrom, mNodeTo))
+		self.__onUpdate('connection', node) # For canvas update
+
+	def removeConnection(self, mNodeFrom, mNodeTo):
+		self.__connections.remove((mNodeFrom, mNodeTo))
+		self.__onUpdate('delete connection', node) # For canvas update
+
+	def __onUpdate(self, kind, node):
+		for observer in self.__observers:
+			observer.onNofity(kind, node)
+
+	def _onNotify(self, notifier, event, data):
+		if event == 'deleted':
+			self.__nodes.remove(notifier)
+
+# ------------------------------------------------------
 class MTaskNode(MTreeNode):
 	def __init__(self, parent=None):
 		super(MTaskNode, self).__init__(parent)
