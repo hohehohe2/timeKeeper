@@ -3,7 +3,7 @@
 
 import copy
 from Qt import QtGui, QtCore
-from nody_utils.mergeableDict import DynamicMergeableDict
+from mergeableDict import DynamicMergeableDict
 
 # ======================================================
 # Default style values used by PaintStyle class
@@ -84,7 +84,7 @@ class PaintStyle(object):
 		return brush
 
 # ======================================================
-class ConfigMixin(object):
+class PaintConfigMixin(object):
 	"""
 	Subclass must have _paintStyle and _config members.
 	"""
@@ -104,16 +104,3 @@ class ConfigMixin(object):
 			cls._config.setBase(current)
 
 		canvas.update()
-
-# ======================================================
-def getLineTanNormal(line):
-	if line.length() < 1.0E-2:
-		return QtCore.QPointF(1.0, 0.0), QtCore.QPointF(0.0, 1.0)
-
-	unitLine = line.unitVector()
-	normalLine = unitLine.normalVector()
-
-	tangentVector = unitLine.p2() - unitLine.p1()
-	normalVector = normalLine.p2() - normalLine.p1()
-
-	return tangentVector, normalVector

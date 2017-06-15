@@ -1,9 +1,9 @@
 # Timekeeper GUI node
 
 from Qt import QtGui, QtWidgets, QtCompat
-from gnode.gnode_main import GRectNode, GDotNode
-from gnode.gnode_utils import PaintStyle
-from nody_utils.mergeableDict import DynamicMergeableDict
+from nodeViewFramework.gnode_main import GRectNode, GDotNode, GConnection
+from nodeViewFramework.paintStyle import PaintStyle
+from nodeViewFramework.mergeableDict import DynamicMergeableDict
 
 # ======================================================
 class GTaskNode(GRectNode):
@@ -40,12 +40,6 @@ class GTaskNode(GRectNode):
 		# This GTaskNode instance is deleted when the model node deletion is observed
 		self.__mTaskNode.delete()
 
-	def getMTaskNode(self):
-		"""
-		Get the MTaskNode this object is for
-		"""
-		return self.__mTaskNode
-
 	def __loadUiFile(self):
 		import os, inspect
 		dirname = os.path.dirname(inspect.getabsfile(GTaskNode))
@@ -71,8 +65,9 @@ class GTaskNode(GRectNode):
 
 		self.geometryChanged.connect(self.__onGeometryChanged)
 
-	def __onMTaskNodeDeleted(self):
-		super(GTaskNode, self).delete()
+	def __setActualEnabled(self):
+		hasChild = bool(self.__mTaskNode.getChildren())
+		self.__ui.actualSB.setEnabled(not hasChild)
 
 	# MTreeNode event callbacks.
 
@@ -81,7 +76,7 @@ class GTaskNode(GRectNode):
 			# The only node this object is observing is an MTaskNode which this GUI node is for
 			self.__onAttrChanged(notifier, data)
 		elif event == 'deleted':
-			self.__onMTaskNodeDeleted()
+			super(GTaskNode, self).delete()
 		elif event in ['childAdded', 'childRemoved']:
 			self.__setActualEnabled()
 
@@ -111,10 +106,6 @@ class GTaskNode(GRectNode):
 
 		self.update()
 
-	def __setActualEnabled(self):
-		hasChild = bool(self.__mTaskNode.getChildren())
-		self.__ui.actualSB.setEnabled(not hasChild)
-
 	# Qt GraphicsWidget callbacks
 
 	def __onGeometryChanged(self):
@@ -142,32 +133,45 @@ class GTaskNode(GRectNode):
 # ------------------------------------------------------
 class GTaskDotNode(GDotNode):
 
-	def __init__(self, canvas, mDotNode):
+	def __init__(self, canvas, mTaskDotNode):
 		super(GTaskDotNode, self).__init__(canvas)
-		self.__mDotNode = mDotNode
-		mDotNode.addObserver(self)
+		self.__mTaskDotNode = mTaskDotNode
+		mTaskDotNode.addObserver(self)
 		self.__isPosChanging = False
 
-	# MTreeNode event callback.
+	def delete(self):
+		self.__mTaskDotNode.delete()
+
+	# MTreeNode event callbacks.
 
 	def _onNotify(self, notifier, event, data):
 
 		if event in 'attrChanged' and data[0] == 'pos':
+			if not self.__isPosChanging:
+				self.__isPosChanging = True
+				try:
+					self.setPos(*mTaskNode.getAttr('pos'))
+				finally:
+					self.__isPosChanging = False
 
-			if self.__isPosChanging:
-				return
-			self.__isPosChanging = True
-
-			try:
-				self.setPos(*mTaskNode.getAttr('pos'))
-			finally:
-				self.__isPosChanging = False
+		elif event == 'deleted':
+			super(GTaskDotNode, self).delete()
 
 	# Qt GraphicsWidget callbacks
 
 	def __onGeometryChanged(self):
 		pos = self.pos()
-		self.__mTaskNode.setAttr('pos', (pos.x(), pos.y()))
+		self.__mTaskDotNode.setAttr('pos', (pos.x(), pos.y()))
+
+# ------------------------------------------------------
+class GTaskConnection(GConnection):
+
+	def __init__(self, canvas, mConnection):
+		super(GTaskConnection, self).__init__(mConnection.getFrom(), mConnection.getTo())
+		self.__mConnection = mConnection
+
+	def delete(self):
+		self.__mConnection.delete()
 
 # ======================================================
 if __name__ == '__main__':
@@ -190,7 +194,7 @@ if __name__ == '__main__':
 		ct1.setAttr('actual', 3.0)
 		gt1.setAttr('actual', 4.0)
 
-		from nody_utils.treeNode import serialize
+		from taskModel import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	global app
@@ -198,7 +202,7 @@ if __name__ == '__main__':
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
 
-	from gnode.gnode_main import GCanvas
+	from nodeViewFramework.gnode_main import GCanvas
 	canvas = GCanvas()
 
 	pickledNetwork = createNetwork()

@@ -7,8 +7,22 @@
 
 import copy
 from Qt import QtGui, QtCore, QtWidgets
-from nody_utils.mergeableDict import DynamicMergeableDict
-from gnode_utils import PaintStyle, ConfigMixin, getLineTanNormal
+from mergeableDict import DynamicMergeableDict
+from paintStyle import PaintStyle, PaintConfigMixin
+
+
+# ======================================================
+def _getLineTanNormal(line):
+	if line.length() < 1.0E-2:
+		return QtCore.QPointF(1.0, 0.0), QtCore.QPointF(0.0, 1.0)
+
+	unitLine = line.unitVector()
+	normalLine = unitLine.normalVector()
+
+	tangentVector = unitLine.p2() - unitLine.p1()
+	normalVector = normalLine.p2() - normalLine.p1()
+
+	return tangentVector, normalVector
 
 # ======================================================
 # nody main classes
@@ -23,7 +37,7 @@ class GCanvas(QtWidgets.QGraphicsScene):
 	def show(self):
 		self.__view.show()
 
-	def keyPressEvefnt(self, event):
+	def keyPressEvent(self, event):
 		super(GCanvas, self).keyPressEvent(event)
 
 		if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
@@ -54,7 +68,7 @@ class _GView(QtWidgets.QGraphicsView):
 		self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
 
 # ------------------------------------------------------
-class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
+class GNodeBase(QtWidgets.QGraphicsWidget, PaintConfigMixin):
 
 	def __init__(self, canvas):
 		super(GNodeBase, self).__init__()
@@ -130,7 +144,7 @@ class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
 		return super(GNodeBase, self).itemChange(change, value)
 
 # ------------------------------------------------------
-class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
+class GConnection(QtWidgets.QGraphicsWidget, PaintConfigMixin):
 
 	_paintStyle = PaintStyle()
 	_config = DynamicMergeableDict(
@@ -172,7 +186,7 @@ class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
 		if not arrowTip:
 			return
 
-		tangentVector, normalVector = getLineTanNormal(line)
+		tangentVector, normalVector = _getLineTanNormal(line)
 
 		arrowHeadSize = self._config['arrowHeadSize']
 		baseCenter = arrowTip - tangentVector * arrowHeadSize * 2
@@ -204,7 +218,7 @@ class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
 		if (not arrowTip) or (not arrowTail):
 			return path
 
-		tangentVector, normalVector = getLineTanNormal(line)
+		tangentVector, normalVector = _getLineTanNormal(line)
 
 		linePolygon = QtGui.QPolygonF()
 		linePolygon.append(arrowTail - normalVector * linewidth)
@@ -410,7 +424,7 @@ class GDotNode(GNodeBase):
 
 	def _getIntersectPoint(self, line, isStart):
 		center = self._getCenter()
-		tangentVector, normalVector = getLineTanNormal(line)
+		tangentVector, normalVector = _getLineTanNormal(line)
 		if isStart:
 			return center + tangentVector * self.__radius()
 		else:
