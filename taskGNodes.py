@@ -5,6 +5,7 @@ from nodeViewFramework.frameworkMain import GRectNode, GDotNode, GConnection
 from nodeViewFramework.paintStyle import PaintStyle
 from utils.mergeableDict import DynamicMergeableDict
 
+
 # ======================================================
 class GTaskNode(GRectNode):
 
@@ -24,7 +25,7 @@ class GTaskNode(GRectNode):
 	def __init__(self, canvas, mTaskNode):
 		super(GTaskNode, self).__init__(canvas)
 
-		self.__mTaskNode = mTaskNode
+		self.__mNode = mTaskNode
 		mTaskNode.addObserver(self)
 
 		self.__loadUiFile()
@@ -34,11 +35,14 @@ class GTaskNode(GRectNode):
 		self.__processingAttrNames = set()
 		self.__isDescriptionChanging = False
 
+	def getMNode(self):
+		return self.__mNode
+
 	def delete(self):
 		# To deal with multiple GTaskNode nodes observing the same MTaskNode,
 		# we do not delete this UI node directly, instead we delete the model node
 		# This GTaskNode instance is deleted when the model node deletion is observed
-		self.__mTaskNode.delete()
+		self.__mNode.delete()
 
 	def __loadUiFile(self):
 		import os, inspect
@@ -48,7 +52,7 @@ class GTaskNode(GRectNode):
 		self.addWidget(self.__ui)
 
 	def __setInitNodeState(self):
-		mTaskNode = self.__mTaskNode
+		mTaskNode = self.__mNode
 		ui = self.__ui
 		self.setPos(*mTaskNode.getAttr('pos'))
 		self.resize(*mTaskNode.getAttr('size'))
@@ -66,10 +70,10 @@ class GTaskNode(GRectNode):
 		self.geometryChanged.connect(self.__onGeometryChanged)
 
 	def __setActualEnabled(self):
-		hasChild = bool(self.__mTaskNode.getChildren())
+		hasChild = bool(self.__mNode.getChildren())
 		self.__ui.actualSB.setEnabled(not hasChild)
 
-	# TreeNode event callbacks.
+	# Model event callbacks.
 
 	def _onNotify(self, notifier, event, data):
 		if event in 'attrChanged':
@@ -111,22 +115,22 @@ class GTaskNode(GRectNode):
 	def __onGeometryChanged(self):
 		pos = self.pos()
 		size = self.size()
-		self.__mTaskNode.setAttr('pos', (pos.x(), pos.y()))
-		self.__mTaskNode.setAttr('size', (size.width(), size.height()))
+		self.__mNode.setAttr('pos', (pos.x(), pos.y()))
+		self.__mNode.setAttr('size', (size.width(), size.height()))
 
 	# Qt widget callbacks
 
 	def __onEstimatedChanged(self, value):
-		self.__mTaskNode.setAttr('estimated', value)
+		self.__mNode.setAttr('estimated', value)
 
 	def __onActualChanged(self, value):
-		self.__mTaskNode.setAttr('actual', value)
+		self.__mNode.setAttr('actual', value)
 
 	def __onDescriptionChanged(self):
 		text = self.__ui.descriptionTB.toHtml()
 		self.__isDescriptionChanging = True
 		try:
-			self.__mTaskNode.setAttr('description', text)
+			self.__mNode.setAttr('description', text)
 		finally:
 			self.__isDescriptionChanging = False
 
@@ -135,14 +139,18 @@ class GTaskDotNode(GDotNode):
 
 	def __init__(self, canvas, mTaskDotNode):
 		super(GTaskDotNode, self).__init__(canvas)
-		self.__mTaskDotNode = mTaskDotNode
+		self.__mNode = mTaskDotNode
 		mTaskDotNode.addObserver(self)
 		self.__isPosChanging = False
+		self.geometryChanged.connect(self.__onGeometryChanged)
+
+	def getMNode(self):
+		return self.__mNode
 
 	def delete(self):
-		self.__mTaskDotNode.delete()
+		self.__mNode.delete()
 
-	# TreeNode event callbacks.
+	# Model event callbacks.
 
 	def _onNotify(self, notifier, event, data):
 
@@ -150,7 +158,7 @@ class GTaskDotNode(GDotNode):
 			if not self.__isPosChanging:
 				self.__isPosChanging = True
 				try:
-					self.setPos(*mTaskNode.getAttr('pos'))
+					self.setPos(*self.__mNode.getAttr('pos'))
 				finally:
 					self.__isPosChanging = False
 
@@ -161,29 +169,60 @@ class GTaskDotNode(GDotNode):
 
 	def __onGeometryChanged(self):
 		pos = self.pos()
-		self.__mTaskDotNode.setAttr('pos', (pos.x(), pos.y()))
+		self.__mNode.setAttr('pos', (pos.x(), pos.y()))
 
 # ------------------------------------------------------
 class GTaskConnection(GConnection):
 
 	def __init__(self, canvas, mConnection):
-		super(GTaskConnection, self).__init__(mConnection.getFrom(), mConnection.getTo())
-		self.__mConnection = mConnection
+		# Assume the canvas can show mConnection
+		gNodeFrom = self.__findGNode(mConnection.getFrom(), canvas)
+		gNodeTo = self.__findGNode(mConnection.getTo(), canvas)
+		assert(gNodeFrom and gNodeTo)
+
+		super(GTaskConnection, self).__init__(gNodeFrom, gNodeTo)
+		self.__mNode = mConnection
+		mConnection.addObserver(self)
+
+	def getMNode(self):
+		return self.__mNode
 
 	def delete(self):
-		self.__mConnection.delete()
+		self.__mNode.delete()
+
+	@staticmethod
+	def canCanvasShowConnection(self, canvas, mConnection):
+		# Test if both ends of the connection are displayed on the canvas
+		gNodeFrom = self.__findGNode(mConnection.getFrom(), canvas)
+		gNodeTo = self.__findGNode(mConnection.getTo(), canvas)
+		return gNodeFrom and gNodeTo
+
+	@staticmethod
+	def __findGNode(mNode, canvas):
+		for gNode in canvas.items():
+			if hasattr(gNode, 'getMNode') and gNode.getMNode() == mNode:
+				return gNode
+
+	# Model event callbacks.
+
+	def _onNotify(self, notifier, event, data):
+		if event == 'deleted':
+			super(GTaskConnection, self).delete()
 
 # ======================================================
 if __name__ == '__main__':
 
+	from taskModel import MTaskNode, MTaskDotNode, MTaskConnection
+
 	def createNetwork():
-		from taskModel import MTaskNode
 		root = MTaskNode()
 		pt1 = MTaskNode(root)
 		pt2 = MTaskNode(root)
 		ct1 = MTaskNode(pt1)
 		ct2 = MTaskNode(pt1)
 		gt1 = MTaskNode(ct2)
+		cd1 = MTaskDotNode(ct1)
+		c1 = MTaskConnection(ct1, ct2)
 
 		pt1.setAttr('pos', (0, 60))
 		pt2.setAttr('pos', (170, 60))
@@ -194,8 +233,9 @@ if __name__ == '__main__':
 		ct1.setAttr('actual', 3.0)
 		gt1.setAttr('actual', 4.0)
 
+
 		from utils.treeNode import serialize
-		return serialize([root, pt1, pt2, ct1, ct2, gt1])
+		return serialize([root, pt1, pt2, ct1, ct2, gt1, cd1, c1])
 
 	global app
 
@@ -204,18 +244,32 @@ if __name__ == '__main__':
 
 	from nodeViewFramework.frameworkMain import GCanvas
 	canvas = GCanvas()
+	canvas2 = GCanvas()
 
 	pickledNetwork = createNetwork()
 	import cPickle as pickle
 	network1 = pickle.loads(pickledNetwork)
 	network2 = pickle.loads(pickledNetwork)
 
-	for node in network1:
-		GTaskNode(canvas, node)
-	for node in network2:
-		gt = GTaskNode(canvas, node)
-		pos = node.getAttr('pos')
-		node.setAttr('pos', (pos[0] + 360, pos[1] + 10))
+	def getGClass(item):
+		return {
+			MTaskNode : GTaskNode,
+			MTaskDotNode : GTaskDotNode,
+			MTaskConnection : GTaskConnection,
+			}[item.__class__]
+
+	for item in network1:
+		gClass = getGClass(item)
+		gClass(canvas, item)
+		gClass(canvas2, item)
+	for item in network2:
+		gClass = getGClass(item)
+		gt = gClass(canvas, item)
+		if item.isNode():
+			pos = item.getAttr('pos')
+			item.setAttr('pos', (pos[0] + 360, pos[1] + 10))
 
 	canvas.show()
+	canvas2.show()
+
 	app.exec_()

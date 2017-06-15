@@ -16,6 +16,9 @@ class MTaskNode(TreeNode):
 
 		self.addObserver(self)
 
+	def isNode(self):
+		return True
+
 	def setParent(self, parent):
 		oldParent = self.getParent()
 		super(MTaskNode, self).setParent(parent)
@@ -43,10 +46,24 @@ class MTaskDotNode(TreeNode):
 		super(MTaskDotNode, self).__init__(parent)
 		self.setAttr('pos', (0, 0))
 
+	def isNode(self):
+		return True
+
 # ------------------------------------------------------
 class MTaskConnection(Observable):
-	def __init__(self):
+	def __init__(self, fromMNode, toMNode):
 		super(MTaskConnection, self).__init__()
+		self.__from = fromMNode
+		self.__to = toMNode
+
+	def getFrom(self):
+		return self.__from
+
+	def getTo(self):
+		return self.__to
+
+	def isNode(self):
+		return False
 
 	def delete(self):
 		self._notify('deleted')
@@ -59,7 +76,6 @@ class MTaskConnection(Observable):
 
 	def __setstate__(self, d):
 		self.__dict__ = d
-
 
 # ======================================================
 # class MTaskModel(object):
