@@ -1,13 +1,54 @@
-from treenodecanvas.treeNodeCanvasBase import GTreeNodeCanvasBase
+from gnode.gnode_main import GCanvas, GConnection
+
+from treenodecanvas.treeNode import MTreeNode
 from mtask import MTaskNode, MTaskDotNode
 from gtask import GTaskNode, GTaskDotNode
 
 # ======================================================
-class GTaskTreeNodeCanvas(GTreeNodeCanvasBase):
+class GTaskTreeNodeCanvas(GCanvas):
 	_classMapper = {
 		MTaskNode : GTaskNode,
 		MTaskDotNode : GTaskDotNode,
 		}
+
+	def __init__(self, *args, **kargs):
+		super(GTaskTreeNodeCanvas, self).__init__(*args, **kargs)
+		self.__rootMTreeNode = MTreeNode()
+
+	def resetNetwork(self, rootMTreeNode, connections):
+		"""
+		Make this canvas represents the network under rootMTreeNode
+		connections where either of the node is not a direct child of rootMTreeNode are ignored
+		_classMapper is used to find the appropriate GNode sub class for each mTreeNode
+		"""
+		assert(isinstance(rootMTreeNode, MTreeNode))
+
+		self.clear()
+		self.__rootMTreeNode = rootMTreeNode
+		self.addNetwork(rootMTreeNode.getChildren(), connections)
+
+	def addNetwork(self, mTreeNodes, connections):
+		"""
+		Add a network to the current canvas.
+		MTreeNodes which parent is not the current root are ignored
+		connections where either of the node is not a direct child of current root Mnode are ignored
+		_classMapper is used to find the appropriate GNode sub class for each mTreeNode
+		"""
+		items = self.items()
+		mTreeNodeToGNode = {}
+		for mTreeNode in mTreeNodes:
+			if mTreeNode in items:
+				continue
+			if mTreeNode.getParent() != self.__rootMTreeNode:
+				continue
+			gNodeClass = self._classMapper[mTreeNode.__class__]
+			gNode = gNodeClass(self, mTreeNode) # instanciate GNode sub class instance for mTreeNode
+			mTreeNodeToGNode[mTreeNode] = gNode
+
+		for connectionFrom, connectionTo in connections:
+			assert(connectionFrom in mTreeNodes)
+			assert(connectionTo in mTreeNodes)
+			GConnection(mTreeNodeToGNode[connectionFrom], mTreeNodeToGNode[connectionTo])
 
 # ======================================================
 if __name__ == '__main__':
