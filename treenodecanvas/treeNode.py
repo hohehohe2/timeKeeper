@@ -2,11 +2,11 @@
 # Gui independent hierarchical node network model
 """
 It's not worth a class to model the whole network, we can just
-have MNode tree and list of tuples for connections
+have MTreeNode tree and list of tuples for connections
 Just like Maya, nodes and connections can be handled separately
 
 
-An MNode
+An MTreeNode
 	- has attributes
 	- can be observed
 	- can observe other nodes
@@ -40,11 +40,11 @@ A node can observe itself;
 """
 
 NOT_EXIST = object()
-class MNode(object):
+class MTreeNode(object):
 
 	def __init__(self, parent=None):
 		self.__attr = {} # {attrName: value}
-		self.__observers = [] # List of MNodes that are observing this object
+		self.__observers = [] # List of MTreeNodes that are observing this object
 		self.__parent = None
 		self.__children = []
 
@@ -131,7 +131,7 @@ class MNode(object):
 		self._notify('childAdded', child)
 
 	def __getstate__(self):
-		privatePrefix = '_MNode'
+		privatePrefix = '_MTreeNode'
 
 		d = self.__dict__.copy()
 
@@ -140,11 +140,11 @@ class MNode(object):
 		# relationship consistent.
 
 		# For efficiency we just check if self is _serializeRoot and exclude if it is a root
-		# expecting it prevents serializing the while MNode tree through Python reference but
-		# it doesn't work if we have additional MNode observers outside of the tree
+		# expecting it prevents serializing the while MTreeNode tree through Python reference but
+		# it doesn't work if we have additional MTreeNode observers outside of the tree
 		def excludeNonNetwork(candidates, attrName):
 			candCopy = candidates[:]
-			candCopy = [x for x in candCopy if isinstance(x, MNode) and x != _serializeRoot]
+			candCopy = [x for x in candCopy if isinstance(x, MTreeNode) and x != _serializeRoot]
 			d[privatePrefix + attrName] = candCopy
 
 		excludeNonNetwork(self.__observers, '__observers')
@@ -162,39 +162,39 @@ class MNode(object):
 
 # ======================================================
 _serializeRoot = None
-def serialize(mNodes, root=None):
+def serialize(mTreeNodes, root=None):
 	"""
-	Serialize the node tree(mNodes) rooted at the given root.
-	root should not be in mNodes
+	Serialize the node tree(mTreeNodes) rooted at the given root.
+	root should not be in mTreeNodes
 	Observers are not pickled unless it's in the network
 	"""
 	global _serializeRoot
 	import cPickle as pickle
 	_serializeRoot = root
 	try:
-		return pickle.dumps(mNodes)
+		return pickle.dumps(mTreeNodes)
 	finally:
 		_serializeRoot = None
 
 # ======================================================
 if __name__ == '__main__':
 
-	class NamedMNode(MNode):
+	class NamedMTreeNode(MTreeNode):
 		def __init__(self, name):
-			super(NamedMNode, self).__init__()
+			super(NamedMTreeNode, self).__init__()
 			self.setAttr('name', name)
 		def __str__(self):
 			return self.getAttr('name')
 
-	class ObservingNode(NamedMNode):
+	class ObservingNode(NamedMTreeNode):
 		def _onNotify(self, notifier, event, data):
 			print notifier.getAttr('name'), event, data	
 
 	a = ObservingNode('a')
 
-	b = NamedMNode('b')
-	c = NamedMNode('c')
-	d = NamedMNode('d')
+	b = NamedMTreeNode('b')
+	c = NamedMTreeNode('c')
+	d = NamedMTreeNode('d')
 
 	b.addObserver(a)
 	c.addObserver(a)

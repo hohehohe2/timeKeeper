@@ -1,9 +1,9 @@
-from mnode.mnode_canvas import GNodeCanvasBase
+from treenodecanvas.treeNodeCanvasBase import GTreeNodeCanvasBase
 from mtask import MTaskNode, MTaskDotNode
 from gtask import GTaskNode, GTaskDotNode
 
 # ======================================================
-class GTaskNodeCanvas(GNodeCanvasBase):
+class GTaskTreeNodeCanvas(GTreeNodeCanvasBase):
 	_classMapper = {
 		MTaskNode : GTaskNode,
 		MTaskDotNode : GTaskDotNode,
@@ -32,14 +32,14 @@ if __name__ == '__main__':
 		ct1.setAttr('actual', 3.0)
 		gt1.setAttr('actual', 4.0)
 
-		from mnode.mnode_main import serialize
+		from treenodecanvas.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	global app, view
 
 	app = QtWidgets.QApplication(sys.argv)
 
-	canvas = GTaskNodeCanvas()
+	canvas = GTaskTreeNodeCanvas()
 
 	pickledNetwork = createNetwork()
 	import cPickle as pickle

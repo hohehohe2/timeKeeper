@@ -74,7 +74,7 @@ class GTaskNode(GRectNode):
 	def __onMTaskNodeDeleted(self):
 		super(GTaskNode, self).delete()
 
-	# MNode event callbacks.
+	# MTreeNode event callbacks.
 
 	def _onNotify(self, notifier, event, data):
 		if event in 'attrChanged':
@@ -148,7 +148,7 @@ class GTaskDotNode(GDotNode):
 		mDotNode.addObserver(self)
 		self.__isPosChanging = False
 
-	# MNode event callback.
+	# MTreeNode event callback.
 
 	def _onNotify(self, notifier, event, data):
 
@@ -190,7 +190,7 @@ if __name__ == '__main__':
 		ct1.setAttr('actual', 3.0)
 		gt1.setAttr('actual', 4.0)
 
-		from mnode.mnode_main import serialize
+		from treenodecanvas.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	global app, view

@@ -18,43 +18,43 @@ GCanvas, GNodeBase, GRectNode, GDotNode, GConnection
 				GDotNode: Dot node
 
 # ------------------------------------------------------
-MNode
+MTreeNode, GTreeNodeCanvasBase
 
-- Model components, no sense of GUI
-- Has attribute
-- Has hierarchy
-- Event notification mechanism
-- Supports pickling
-- For general purpose
+MTreeNode is;
+	- Model components, no sense of GUI
+	- Has attribute
+	- Has hierarchy
+	- Event notification mechanism
+	- Supports pickling
+	- For general purpose
 
-		MNode: Base class of a model nodes that support attribute, event notification, grouping
+GTreeNodeCanvasBase is;
+	- GCanvas to be used with MTreeNode classes
+	- Every MTreeNode that a canvas is displaying has the same parent
+	- Incharge of creating and registering GNode subclass instance from MTreeNode
+	- Abstract, subclass should provide MTreeNode subclass -> GNode subclass mapping
+	- GNode subclass constructors must be compatible with this node
+	- For general purpose
 
-# ------------------------------------------------------
-GNodeCanvasBase
-
-- A class incharge of creating and registering GNode (ie. for GUI) from MNode network
-- Every MNode that a canvas is displaying has the same parent
-- Subclass should provide MNode subclass -> GNode subclass mapping
-- GNode subclass constructors must be compatible with this node
-- For general purpose
-
+		object(Python)
+			MTreeNode: Base class of a model nodes with attribute, event notification, grouping
 		GCanvas
-			GNodeCanvasBase: GCanvas to be used with MNode classes
+			GTreeNodeCanvasBase: GCanvas to be used with MTreeNode classes
 
 # ======================================================
 MTaskNode, MTaskDotNode
 
-- Model nodes for time keeper application
+- Model nodes for time keeper application (though MTaskDotNode can be used for any application)
 
-		MNode
-			MTaskNode: Regular task model node
-			MTaskDotNode: Dot model node
+		MTreeNode
+			MTaskNode: Regular task model node for time keeper 
+			MTaskDotNode: Dot model node for time keeper
 
 # ------------------------------------------------------
 GTaskNode, GTaskDotNode
 
 - Gui nodes for time keeper application (though GTaskDotNode can be used for any application)
-- These are compatible with GNodeCanvasBase requirement
+- These are compatible with GTreeNodeCanvasBase requirement
 
 		GRectNode
 			GTaskNode: Regular task GUI node
@@ -62,10 +62,10 @@ GTaskNode, GTaskDotNode
 			GTaskDotNode: Dot task GUI node
 
 # ------------------------------------------------------
-GTaskNodeCanvas
+GTaskTreeNodeCanvas
 
-- GNodeCanvasBase for timekeeper application
-- Offers MNode subclass -> GNode subclass mapping
+- GTreeNodeCanvasBase for timekeeper application
+- Offers MTreeNode subclass -> GNode subclass mapping
 
-		GNodeCanvasBase
-			GTaskNodeCanvas: Concreate GNodeCanvasBase class for timekeeper application
+		GTreeNodeCanvasBase
+			GTaskTreeNodeCanvas: Concreate GTreeNodeCanvasBase class for timekeeper application

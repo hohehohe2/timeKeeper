@@ -1,7 +1,7 @@
-from mnode.mnode_main import MNode
+from treenodecanvas.treeNode import MTreeNode
 
 # ======================================================
-class MTaskNode(MNode):
+class MTaskNode(MTreeNode):
 	def __init__(self, parent=None):
 		super(MTaskNode, self).__init__(parent)
 		self.setAttr('description', '') # Long description
@@ -37,7 +37,7 @@ class MTaskNode(MNode):
 		self.setAttr('actual', sumChildActuals)
 
 # ------------------------------------------------------
-class MTaskDotNode(MNode):
+class MTaskDotNode(MTreeNode):
 	def __init__(self, parent=None):
 		super(MTaskDotNode, self).__init__(parent)
 		self.setAttr('pos', (0, 0))
@@ -53,7 +53,7 @@ if __name__ == '__main__':
 		ct2 = MTaskNode(pt1)
 		gt1 = MTaskNode(ct2)
 
-		from mnode.mnode_main import serialize
+		from treenodecanvas.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
 	pickledNetwork = createNetwork()
