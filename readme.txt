@@ -1,15 +1,13 @@
-GScene, GView, GNodeBase, GRectNode, GDotNode, GConnection
+GCanvas, GNodeBase, GRectNode, GDotNode, GConnection
 
 - Purely GUI components for node network
 - No sense of hierarchy
 - For general purpose
-- Unlike Qt design intention, GScene is used only for UI drawing, model is Qt independent
+- Unlike Qt design intention, GCanvas is used only for UI drawing, model is Qt independent
+  (QtWidgets.QGraphicsScene is used as a view class in model-view! )
 
 		QtWidgets.QGraphicsScene
-			GScene:	Scene to show node networks
-
-		QtWidgets.QGraphicsView
-			GView: View to show node networks
+			GCanvas:	Scene(canvas) to show node networks
 
 		QtWidgets.QGraphicsWidget
 			GConnection: Connection widget
@@ -32,15 +30,16 @@ MNode
 		MNode: Base class of a model nodes that support attribute, event notification, grouping
 
 # ------------------------------------------------------
-GNodeSceneBase
+GNodeCanvasBase
 
 - A class incharge of creating and registering GNode (ie. for GUI) from MNode network
-- Designed that every node in a scene has the same parent
-- To use this class, GNode subclass constructors must be compatible with this node
+- Every MNode that a canvas is displaying has the same parent
+- Subclass should provide MNode subclass -> GNode subclass mapping
+- GNode subclass constructors must be compatible with this node
 - For general purpose
 
-		GScene
-			GNodeSceneBase: GScene to be used with MNode classes
+		GCanvas
+			GNodeCanvasBase: GCanvas to be used with MNode classes
 
 # ======================================================
 MTaskNode, MTaskDotNode
@@ -55,7 +54,7 @@ MTaskNode, MTaskDotNode
 GTaskNode, GTaskDotNode
 
 - Gui nodes for time keeper application (though GTaskDotNode can be used for any application)
-- These are compatible with GNodeSceneBase requirement
+- These are compatible with GNodeCanvasBase requirement
 
 		GRectNode
 			GTaskNode: Regular task GUI node
@@ -63,10 +62,10 @@ GTaskNode, GTaskDotNode
 			GTaskDotNode: Dot task GUI node
 
 # ------------------------------------------------------
-GTaskNodeScene
+GTaskNodeCanvas
 
-- GNodeScene for timekeeper application
+- GNodeCanvasBase for timekeeper application
 - Offers MNode subclass -> GNode subclass mapping
 
-		GNodeSceneBase
-			GTaskNodeScene: Concreate GNodeScene class for timekeeper application
+		GNodeCanvasBase
+			GTaskNodeCanvas: Concreate GNodeCanvasBase class for timekeeper application

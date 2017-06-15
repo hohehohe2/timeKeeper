@@ -21,8 +21,8 @@ class GTaskNode(GRectNode):
 	_config = DynamicMergeableDict(shapeRoundRadius=1)
 	_config.setBase(GRectNode._config)
 
-	def __init__(self, scene, mTaskNode):
-		super(GTaskNode, self).__init__(scene)
+	def __init__(self, canvas, mTaskNode):
+		super(GTaskNode, self).__init__(canvas)
 
 		self.__mTaskNode = mTaskNode
 		mTaskNode.addObserver(self)
@@ -142,8 +142,8 @@ class GTaskNode(GRectNode):
 # ------------------------------------------------------
 class GTaskDotNode(GDotNode):
 
-	def __init__(self, scene, mDotNode):
-		super(GTaskDotNode, self).__init__(scene)
+	def __init__(self, canvas, mDotNode):
+		super(GTaskDotNode, self).__init__(canvas)
 		self.__mDotNode = mDotNode
 		mDotNode.addObserver(self)
 		self.__isPosChanging = False
@@ -198,9 +198,8 @@ if __name__ == '__main__':
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
 
-	from gnode.gnode_main import GScene, GView
-	scene = GScene()
-	view = GView(None, scene)
+	from gnode.gnode_main import GCanvas
+	canvas = GCanvas()
 
 	pickledNetwork = createNetwork()
 	import cPickle as pickle
@@ -208,9 +207,9 @@ if __name__ == '__main__':
 	network2 = pickle.loads(pickledNetwork)
 
 	for node in network1:
-		GTaskNode(scene, node)
+		GTaskNode(canvas, node)
 	for node in network2:
-		gt = GTaskNode(scene, node)
+		gt = GTaskNode(canvas, node)
 		pos = node.getAttr('pos')
 		node.setAttr('pos', (pos[0] + 360, pos[1] + 10))
 

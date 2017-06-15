@@ -1,9 +1,9 @@
-from mgscene.gNodeScene import GNodeSceneBase
+from mnode.mnode_canvas import GNodeCanvasBase
 from mtask import MTaskNode, MTaskDotNode
 from gtask import GTaskNode, GTaskDotNode
 
 # ======================================================
-class GTaskNodeScene(GNodeSceneBase):
+class GTaskNodeCanvas(GNodeCanvasBase):
 	_classMapper = {
 		MTaskNode : GTaskNode,
 		MTaskDotNode : GTaskDotNode,
@@ -13,7 +13,6 @@ class GTaskNodeScene(GNodeSceneBase):
 if __name__ == '__main__':
 	import sys
 	from Qt import QtWidgets
-	from gnode.gnode_main import GView
 
 	def createNetwork():
 
@@ -40,19 +39,18 @@ if __name__ == '__main__':
 
 	app = QtWidgets.QApplication(sys.argv)
 
-	scene = GTaskNodeScene()
-	view = GView(None, scene)
+	canvas = GTaskNodeCanvas()
 
 	pickledNetwork = createNetwork()
 	import cPickle as pickle
 	root, pt1, pt2, ct1, ct2, gt1 = pickle.loads(pickledNetwork)
 
-	scene.resetNetwork(root, ())
+	canvas.resetNetwork(root, ())
 
 	ct1.setParent(root)
 	ct2.setParent(root)
 	connections = ((ct1, ct2),)
-	scene.addNetwork([ct1, ct2], connections)
+	canvas.addNetwork([ct1, ct2], connections)
 
-	view.show()
+	canvas.show()
 	app.exec_()

@@ -89,7 +89,7 @@ class ConfigMixin(object):
 	Subclass must have _paintStyle and _config members.
 	"""
 	@classmethod
-	def updateStyle(cls, scene, config=None, paintConfig=None):
+	def updateStyle(cls, canvas, config=None, paintConfig=None):
 		"""
 		Update the paint style with config. Can be updated partially
 		"""
@@ -103,7 +103,7 @@ class ConfigMixin(object):
 			cls._config.update(config)
 			cls._config.setBase(current)
 
-		scene.update()
+		canvas.update()
 
 # ======================================================
 def getLineTanNormal(line):

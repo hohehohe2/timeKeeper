@@ -13,10 +13,18 @@ from gnode_utils import PaintStyle, ConfigMixin, getLineTanNormal
 # ======================================================
 # nody main classes
 
-class GScene(QtWidgets.QGraphicsScene):
+class GCanvas(QtWidgets.QGraphicsScene):
 
-	def keyPressEvent(self, event):
-		super(GScene, self).keyPressEvent(event)
+	def __init__(self, *args, **kargs):
+		super(GCanvas, self).__init__(*args, **kargs)
+		self.__view = _GView(None)
+		self.__view.setScene(self)
+
+	def show(self):
+		self.__view.show()
+
+	def keyPressEvefnt(self, event):
+		super(GCanvas, self).keyPressEvent(event)
 
 		if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
 			while self.selectedItems():
@@ -32,11 +40,10 @@ class GScene(QtWidgets.QGraphicsScene):
 		return maxValue
 
 # ------------------------------------------------------
-class GView(QtWidgets.QGraphicsView):
+class _GView(QtWidgets.QGraphicsView):
 
-	def __init__(self, parent, scene):
-		super(GView, self).__init__(parent)
-		self.setScene(scene)
+	def __init__(self, parent):
+		super(_GView, self).__init__(parent)
 
 		self.setRenderHint(QtGui.QPainter.Antialiasing, True)
 		self.setRenderHint(QtGui.QPainter.TextAntialiasing, True)
@@ -49,15 +56,15 @@ class GView(QtWidgets.QGraphicsView):
 # ------------------------------------------------------
 class GNodeBase(QtWidgets.QGraphicsWidget, ConfigMixin):
 
-	def __init__(self, scene):
+	def __init__(self, canvas):
 		super(GNodeBase, self).__init__()
-		scene.addItem(self)
+		canvas.addItem(self)
 
 		self.__connections = []
 
 		self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable)
 		self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)
-		self.setZValue(scene.getMaxZValue() + 1)
+		self.setZValue(canvas.getMaxZValue() + 1)
 		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
 
 	def delete(self):
@@ -134,9 +141,9 @@ class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
 	def __init__(self, nodeFrom, nodeTo):
 		super(GConnection, self).__init__()
 
-		scene = nodeFrom.scene()
-		assert(scene == nodeTo.scene())
-		scene.addItem(self)
+		canvas = nodeFrom.scene()
+		assert(canvas == nodeTo.scene())
+		canvas.addItem(self)
 
 		nodeFrom._addConnection(self)
 		nodeTo._addConnection(self)
@@ -146,7 +153,7 @@ class GConnection(QtWidgets.QGraphicsWidget, ConfigMixin):
 
 		self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)
 		# TODO: Fix the problem where a node is occluded by another node and the connection from/to the node is not
-		self.setZValue(scene.getMaxZValue() + 1)
+		self.setZValue(canvas.getMaxZValue() + 1)
 		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
 
 	def delete(self):
@@ -259,8 +266,8 @@ class GRectNode(GNodeBase):
 		margins = (10, 3, 3, 3) # left, top, right, bottom
 		)
 
-	def __init__(self, scene, x=0, y=0, width=40, height=40):
-		super(GRectNode, self).__init__(scene)
+	def __init__(self, canvas, x=0, y=0, width=40, height=40):
+		super(GRectNode, self).__init__(canvas)
 
 		self.setPos(x, y)
 		self.__setWidthHeight(width, height)
@@ -394,8 +401,8 @@ class GDotNode(GNodeBase):
 		dotRadius=10,
 		)
 
-	def __init__(self, scene, x=0, y=0):
-		super(GDotNode, self).__init__(scene)
+	def __init__(self, canvas, x=0, y=0):
+		super(GDotNode, self).__init__(canvas)
 		self.setPos(x - self.__radius(), y - self.__radius())
 
 	def _getCenter(self):
@@ -430,16 +437,16 @@ if __name__ == '__main__':
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
 
-	scene = GScene()
-	view = GView(None, scene)
+	canvas = GCanvas()
+	view = GView(None, canvas)
 
 	config = {'shapeRoundRadius':4}
-	GRectNode.updateStyle(scene, config)
+	GRectNode.updateStyle(canvas, config)
 
-	n1 = GRectNode(scene, 30, 30, 100, 100)
-	n2 = GDotNode(scene, 150, 150)
-	n3 = GRectNode(scene, 200, 30, 15, 50)
-	n4 = GRectNode(scene, 200, 130, 50, 15)
+	n1 = GRectNode(canvas, 30, 30, 100, 100)
+	n2 = GDotNode(canvas, 150, 150)
+	n3 = GRectNode(canvas, 200, 30, 15, 50)
+	n4 = GRectNode(canvas, 200, 130, 50, 15)
 	c1 = GConnection(n1, n2)
 	c2 = GConnection(n3, n4)
 	c3 = GConnection(n2, n3)
