@@ -175,14 +175,26 @@ class GTaskDotNode(GDotNode):
 class GTaskConnection(GConnection):
 
 	def __init__(self, canvas, mConnection):
-		# Assume the canvas can show mConnection
+		"""
+		This node assumes the canvas can show the mConnection
+		If not creating the instance doesn't show the connection
+		You can check it before creating an instance by
+			GTaskConnection.canCanvasShowConnection(canvas, mConnection)
+		or if you have created an instance
+			gConnection.isValid()
+		"""
 		gNodeFrom = self.__findGNode(mConnection.getFrom(), canvas)
 		gNodeTo = self.__findGNode(mConnection.getTo(), canvas)
-		assert(gNodeFrom and gNodeTo)
+		if not(gNodeFrom and gNodeTo):
+			self.__mNode = None
+			return
 
 		super(GTaskConnection, self).__init__(gNodeFrom, gNodeTo)
 		self.__mNode = mConnection
 		mConnection.addObserver(self)
+
+	def isValid(self):
+		return bool(self.__mNode)
 
 	def getMNode(self):
 		return self.__mNode

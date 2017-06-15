@@ -27,27 +27,33 @@ TreeNode
 - Supports pickling
 - For general purpose
 
-		object(Python)
+		Observable
 			TreeNode: Base class of a model nodes with attribute, event notification, grouping
 
 # ======================================================
-MTaskNode, MTaskDotNode
+MTaskNode, MTaskDotNode, MTaskConnection, MTaskModel
 
-- Model nodes for time keeper application (though MTaskDotNode can be used for any application)
+- Model nodes for time keeper application
 
 		TreeNode
 			MTaskNode: Regular task model node for time keeper 
 			MTaskDotNode: Dot model node for time keeper
+		Observable
+			MTaskConnection: Connection model item for time keeper
+		Observable
+			MTaskModel: The whole model, observes created mItems to remove from self
 
 # ------------------------------------------------------
-GTaskNode, GTaskDotNode, GTaskCanvas
+GTaskNode, GTaskDotNode, GTaskConnection, GTaskCanvas
 
-- Gui nodes for time keeper application (though GTaskDotNode can be used for any application)
+- Gui nodes for time keeper application
 - GTasKCanvas creates GNode subclasses from TreeNode subclasses
 
 		GRectNode
 			GTaskNode: Regular task GUI node
 		GDotNode
 			GTaskDotNode: Dot task GUI node
-		GCanvas
-			GTaskCanvas: GCanvas for timekeeper application
+		GConnection
+			GTaskConnection: Connection task GUI item
+		GCanvas, Observable
+			GTaskCanvas: GCanvas for timekeeper, observes MTaskModel to know item creation
