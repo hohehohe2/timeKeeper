@@ -3,6 +3,7 @@ GScene, GView, GNodeBase, GRectNode, GDotNode, GConnection
 - Purely GUI components for node network
 - No sense of hierarchy
 - For general purpose
+- Unlike Qt design intention, GScene is used only for UI drawing, model is Qt independent
 
 		QtWidgets.QGraphicsScene
 			GScene:	Scene to show node networks
@@ -34,6 +35,7 @@ MNode
 GNodeSceneBase
 
 - A class incharge of creating and registering GNode (ie. for GUI) from MNode network
+- Designed that every node in a scene has the same parent
 - To use this class, GNode subclass constructors must be compatible with this node
 - For general purpose
 
