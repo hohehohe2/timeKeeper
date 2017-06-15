@@ -1,7 +1,7 @@
 from nodeViewFramework.frameworkMain import GCanvas, GConnection
 
 from taskModel import MTaskNode, MTaskDotNode
-from taskGNodes import GTaskNode, GTaskDotNode
+from taskView import GTaskNode, GTaskDotNode
 
 # ======================================================
 class GTaskCanvas(GCanvas):

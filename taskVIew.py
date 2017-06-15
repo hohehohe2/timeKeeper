@@ -200,7 +200,7 @@ class GTaskConnection(GConnection):
 	@staticmethod
 	def __findGNode(mNode, canvas):
 		for gNode in canvas.items():
-			if hasattr(gNode, 'getMNode') and gNode.getMNode() == mNode:
+			if hasattr(gNode, 'getMNode') and gNode.getMNode() == mNode: # hasattr() mmm...
 				return gNode
 
 	# Model event callbacks.

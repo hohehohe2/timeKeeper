@@ -50,6 +50,7 @@ class MTaskDotNode(TreeNode):
 		return True
 
 # ------------------------------------------------------
+# Connection is not a tree node so let's just inherit Observable
 class MTaskConnection(Observable):
 	def __init__(self, fromMNode, toMNode):
 		super(MTaskConnection, self).__init__()
