@@ -37,15 +37,6 @@ class GCanvas(QtWidgets.QGraphicsScene):
 	def show(self):
 		self.__view.show()
 
-	def keyPressEvent(self, event):
-		super(GCanvas, self).keyPressEvent(event)
-
-		if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
-			while self.selectedItems():
-				self.selectedItems()[0].delete()
-
-		self.update()
-
 	def getMaxZValue(self):
 		maxValue = 0
 		for item in self.items():

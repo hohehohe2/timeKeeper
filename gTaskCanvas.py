@@ -1,14 +1,31 @@
+from Qt import QtCore
 from nodeViewFramework.frameworkMain import GCanvas, GConnection
+from utils.observable import Observable
 
 from taskModel import MTaskNode, MTaskDotNode
 from taskView import GTaskNode, GTaskDotNode
 
 # ======================================================
-class GTaskCanvas(GCanvas):
+class GTaskCanvas(GCanvas, Observable):
 
 	def __init__(self, *args, **kargs):
 		super(GTaskCanvas, self).__init__(*args, **kargs)
+		Observable.__init__(self)
 		self.__rootTaskNode = None
+
+	def keyPressEvent(self, event):
+		super(GTaskCanvas, self).keyPressEvent(event)
+
+		if event.modifiers() == QtCore.Qt.ControlModifier:
+			if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
+				while self.selectedItems():
+					self.selectedItems()[0].delete()
+			elif event.key() == QtCore.Qt.Key_N:
+				self._notify('create node')
+			elif event.key() == QtCore.Qt.Key_D:
+				self._notify('create dot')
+
+		self.update()
 
 	def resetNetwork(self, rootTaskNode, connections):
 		"""
