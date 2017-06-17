@@ -1,6 +1,60 @@
 from utils.observable import Observable
 from utils.treeNode import TreeNode
 
+# ======================================================
+class MTaskModel(Observable):
+
+	def __init__(self):
+		super(MTaskModel, self).__init__()
+		self.__theRoot = MTaskNode()
+		self.__connections = []
+
+	def getRoot(self):
+		return self.__theRoot
+
+	def addTaskNode(self, parent):
+		return self.__addNode(parent, MTaskNode, 'createTask')
+
+	def addTaskDotNode(self, parent):
+		return self.__addNode(parent, MTaskDotNode, 'createDot')
+
+	def addConnection(self, mNodeFrom, mNodeTo):
+		self.__checkNode(mNodeFrom)
+		assert(mNodeF.getParent() == mNodeTo.getParent())
+		connection = MTaskConnection(mNodeFrom, mNodeTo)
+		self.__connections.append(connection)
+		connection.addObserver(self)
+		self._notify('createConnection', connection) # For canvas update
+		return connection
+
+	def __addNode(self, parent, taskClass, eventToEmit):
+		if not parent:
+			parent = self.__theRoot
+		else:
+			self.__checkNode(parent)
+
+		node = taskClass(parent)
+		node.addObserver(self)
+		self._notify(eventToEmit, node) # For canvas update, nodes/connections notify their deletion by themselves
+
+		return node
+
+	def __checkNode(self, parent):
+		# Check if the node is in the tree rooted at self.__theRoot
+		p = parent
+		while p:
+			if p == self.__theRoot:
+				break
+			p = p.getParent()
+		else:
+			assert(False and "parent is not under the root")
+
+	def _onNotify(self, notifier, event, data):
+		# Node removes itself from the tree on deletion so MTaskModel does not observe nodes
+		if event == 'deleted':
+			assert(notifier in self.__connections)
+			self.__connections.remove(notifier)
+
 # ------------------------------------------------------
 class MTaskNode(TreeNode):
 	def __init__(self, parent=None):
@@ -79,60 +133,10 @@ class MTaskConnection(Observable):
 		self.__dict__ = d
 
 # ======================================================
-# class MTaskModel(object):
-
-# 	def __init__(self):
-# 		self.__theRoot = MTaskNode()
-# 		self.__connections = []
-# 		self.__observers = []
-
-# 	def addObserver(self, observer):
-# 		if not observer in self.__observers:
-# 			self.__observers.append(observer)
-
-# 	def removeObserver(self, observer):
-# 		if observer in self.__observers:
-# 			self.__observers.remove(observer)
-
-# 	def addTaskNode(self, parent=None):
-# 		if not parent:
-# 			parent = self.__theRoot
-
-# 		node = MTaskNode(parent)
-# 		node.addObserver(self) # To delect deletion
-# 		self.__onUpdate('task', node) # For canvas update, nodes notifies deletion by themselves
-
-# 		return node
-
-# 	def addTaskDotNode(self, parent):
-# 		if not parent:
-# 			parent = self.__theRoot
-
-# 		node = MTaskDotNode(parent)
-# 		node.addObserver(self) # To delect deletion
-# 		self.__onUpdate('dot', node) # For canvas update, nodes notifies deletion by themselves
-
-# 		return node
-
-# 	def addConnection(self, mNodeFrom, mNodeTo):
-# 		self.__connections.append((mNodeFrom, mNodeTo))
-# 		self.__onUpdate('connection', node) # For canvas update
-
-# 	def removeConnection(self, mNodeFrom, mNodeTo):
-# 		self.__connections.remove((mNodeFrom, mNodeTo))
-# 		self.__onUpdate('delete connection', node) # For canvas update
-
-# 	def __onUpdate(self, kind, node):
-# 		for observer in self.__observers:
-# 			observer.onNofity(kind, node)
-
-# 	def _onNotify(self, notifier, event, data):
-# 		if event == 'deleted':
-# 			self.__nodes.remove(notifier)
-
-# ======================================================
 
 if __name__ == '__main__':
+
+	import cPickle as pickle
 
 	def createNetwork():
 		root = MTaskNode()
@@ -145,15 +149,16 @@ if __name__ == '__main__':
 		from utils.treeNode import serialize
 		return serialize([root, pt1, pt2, ct1, ct2, gt1])
 
-	pickledNetwork = createNetwork()
-	import cPickle as pickle
-	root, pt1, pt2, ct1, ct2, gt1 = pickle.loads(pickledNetwork)
+	def nodeTest():
 
-	ct1.setAttr('actual', 3.0)
-	assert(pt1.getAttr('actual') == 3.0)
-	gt1.setAttr('actual', 4.0)
-	assert(pt1.getAttr('actual') == 7.0)
-	ct1.delete()
-	assert(pt1.getAttr('actual') == 4.0)
-	gt1.setParent(None)
-	assert(pt1.getAttr('actual') == 0.0)
+		pickledNetwork = createNetwork()
+		root, pt1, pt2, ct1, ct2, gt1 = pickle.loads(pickledNetwork)
+
+		ct1.setAttr('actual', 3.0)
+		assert(pt1.getAttr('actual') == 3.0)
+		gt1.setAttr('actual', 4.0)
+		assert(pt1.getAttr('actual') == 7.0)
+		ct1.delete()
+		assert(pt1.getAttr('actual') == 4.0)
+		gt1.setParent(None)
+		assert(pt1.getAttr('actual') == 0.0)
