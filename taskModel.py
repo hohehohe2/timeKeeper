@@ -18,9 +18,9 @@ class MTaskModel(Observable):
 	def addTaskDotNode(self, parent):
 		return self.__addNode(parent, MTaskDotNode, 'createDot')
 
-	def addConnection(self, mNodeFrom, mNodeTo):
+	def addTaskConnection(self, mNodeFrom, mNodeTo):
 		self.__checkNode(mNodeFrom)
-		assert(mNodeF.getParent() == mNodeTo.getParent())
+		assert(mNodeFrom.getParent() == mNodeTo.getParent())
 		connection = MTaskConnection(mNodeFrom, mNodeTo)
 		self.__connections.append(connection)
 		connection.addObserver(self)
@@ -34,7 +34,10 @@ class MTaskModel(Observable):
 			self.__checkNode(parent)
 
 		node = taskClass(parent)
-		node.addObserver(self)
+
+		# Node can remove itself from the tree on deletion so MTaskModel does not observe nodes
+		#node.addObserver(self)
+
 		self._notify(eventToEmit, node) # For canvas update, nodes/connections notify their deletion by themselves
 
 		return node
@@ -50,7 +53,6 @@ class MTaskModel(Observable):
 			assert(False and "parent is not under the root")
 
 	def _onNotify(self, notifier, event, data):
-		# Node removes itself from the tree on deletion so MTaskModel does not observe nodes
 		if event == 'deleted':
 			assert(notifier in self.__connections)
 			self.__connections.remove(notifier)

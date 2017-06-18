@@ -35,7 +35,7 @@ class GTaskNode(GRectNode):
 		self.__processingAttrNames = set()
 		self.__isDescriptionChanging = False
 
-	def getMNode(self):
+	def getMItem(self):
 		return self.__mNode
 
 	def delete(self):
@@ -144,7 +144,7 @@ class GTaskDotNode(GDotNode):
 		self.__isPosChanging = False
 		self.geometryChanged.connect(self.__onGeometryChanged)
 
-	def getMNode(self):
+	def getMItem(self):
 		return self.__mNode
 
 	def delete(self):
@@ -196,7 +196,7 @@ class GTaskConnection(GConnection):
 	def isValid(self):
 		return bool(self.__mNode)
 
-	def getMNode(self):
+	def getMItem(self):
 		return self.__mNode
 
 	def delete(self):
@@ -212,7 +212,7 @@ class GTaskConnection(GConnection):
 	@staticmethod
 	def __findGNode(mNode, canvas):
 		for gNode in canvas.items():
-			if hasattr(gNode, 'getMNode') and gNode.getMNode() == mNode: # hasattr() mmm...
+			if hasattr(gNode, 'getMItem') and gNode.getMItem() == mNode: # hasattr() mmm...
 				return gNode
 
 	# Model event callbacks.

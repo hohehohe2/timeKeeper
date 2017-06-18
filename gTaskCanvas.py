@@ -2,15 +2,18 @@ from Qt import QtCore, QtGui
 from nodeViewFramework.frameworkMain import GCanvas, GConnection
 
 from taskModel import MTaskNode, MTaskDotNode
-from taskView import GTaskNode, GTaskDotNode
+from taskView import GTaskNode, GTaskDotNode, GTaskConnection
 
 # ======================================================
 class GTaskCanvas(GCanvas):
+	"""
+	Kind of ad-hoc canvas class for timeKeeper application
+	"""
 
 	def __init__(self, mTaskModel, rootMTaskNode=None, *args, **kargs):
 		super(GTaskCanvas, self).__init__(*args, **kargs)
 		self.__mTaskModel = mTaskModel
-		mTaskModel.addObserver(self)
+		mTaskModel.addObserver(self) # Observe mTask to receive node and connection creation event.
 
 		if rootMTaskNode:
 			self.__rootMTaskNode = rootMTaskNode
@@ -33,6 +36,11 @@ class GTaskCanvas(GCanvas):
 			elif event.key() == QtCore.Qt.Key_D:
 				node = self.__mTaskModel.addTaskDotNode(self.__rootMTaskNode)
 				node.setAttr('pos', pos)
+			elif event.key() == QtCore.Qt.Key_C:
+				gNodeFrom, gNodeTo = self.selectedItems() # TODO: selectedItems() has no order
+				print self.selectedItems()
+				self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
+
 
 		self.update()
 
@@ -45,12 +53,14 @@ class GTaskCanvas(GCanvas):
 		self.__rootMTaskNode = rootMTaskNode
 		self._addNetwork(rootMTaskNode.getChildren(), connections)
 
-	def _addNetwork(self, mNodes, connections):
+	def _addNetwork(self, mNodes, mConnections):
 		"""
 		Add a network to the current canvas.
 		MNodes which parent is not the current root are ignored
 		connections where either of the node is not a direct child of current root Mnode are ignored
 		"""
+
+		mToGMapND, mToGMapC = self.__getMItemToGItemMap()
 
 		# Used to find the appropriate GNode sub class for each mNode
 		classMapper = {
@@ -58,28 +68,53 @@ class GTaskCanvas(GCanvas):
 			MTaskDotNode : GTaskDotNode,
 			}
 
-		items = self.items()
-		mNodeToGNode = {}
 		for mNode in mNodes:
 
-			if mNode in items:
+			if mNode.getParent() != self.__rootMTaskNode:
 				continue
 
-			assert(mNode.getParent() == self.__rootMTaskNode)
+			gNode = mToGMapND.get(mNode)
+			if gNode:
+				continue # Already exists
 
 			gNodeClass = classMapper[mNode.__class__]
-			gNode = gNodeClass(self, mNode) # instanciate GNode sub class instance for mNode
+			gNode = gNodeClass(self, mNode) # instanciate GNode sub class instance for the mNode
 
-			mNodeToGNode[mNode] = gNode
+			mToGMapND[mNode] = gNode
 
-		for connection in connections:
-			assert(connection.getFrom() in mNodes)
-			assert(connection.getTo() in mNodes)
-			GConnection(mNodeToGNode[connection.getFrom()], mNodeToGNode[connection.getTo()])
+		for mConnection in mConnections:
+			mNodeFrom = mConnection.getFrom()
+			mNodeTo = mConnection.getTo()
+			assert(mNodeFrom.getParent() == mNodeTo.getParent())
+
+			if mNodeFrom.getParent() != self.__rootMTaskNode:
+				continue
+
+			gNodeFrom = mToGMapND.get(mNodeFrom)
+			gNodeTo = mToGMapND.get(mNodeTo)
+
+			assert(gNodeFrom and gNodeTo)
+
+			GTaskConnection(self, mConnection) # instanciate GConnection sub class instance for the mConnection
+
+	def __getMItemToGItemMap(self):
+
+		def createMap(gItemClass):
+			gItems = [x for x in self.items() if isinstance(x, gItemClass)]
+			gToMList = [(x.getMItem(), x) for x in gItems]
+			return dict(gToMList)
+
+		mToGMapND = createMap(GTaskNode)
+		mToGMapND.update(createMap(GTaskDotNode))
+		mToGMapC = createMap(GConnection)
+
+		return mToGMapND, mToGMapC
 
 	def _onNotify(self, notifier, event, data):
 		if event in ['createTask', 'createDot']:
 			self._addNetwork([data], ())
+		elif event == 'createConnection':
+			self._addNetwork([], (data,))
 
 # ======================================================
 if __name__ == '__main__':
