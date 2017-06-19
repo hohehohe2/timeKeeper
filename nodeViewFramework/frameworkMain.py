@@ -195,6 +195,8 @@ class GCanvas(QtWidgets.QGraphicsScene):
 			return 
 
 		itemTo = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
+		while itemTo.parent():
+			itemTo = itemTo.parent()
 		if itemTo and isinstance(itemTo, GNodeBase) and itemTo != gnodeFrom:
 			self._createConnection(gnodeFrom, itemTo)
 
@@ -385,7 +387,10 @@ class GRectNode(GNodeBase):
 		self.__setDraggableCursor(False, False)
 
 	def addWidget(self, widget):
+		# It's so weird that without setParent() proxy's parent is None, and it's garbage collected at some point (not immediately).
+		# if we remove parent=self Python crashes.
 		proxy = QtWidgets.QGraphicsProxyWidget(parent=self)
+		proxy.setParent(self)
 		proxy.setWidget(widget)
 		if self.layout():
 			self.layout().addItem(proxy)
