@@ -117,7 +117,7 @@ class GTaskCanvas(GCanvas):
 		elif event == 'createConnection':
 			self._addNetwork([], (data,))
 
-	def _createConnection(self, gNodeFrom, gNodeTo):		
+	def _createConnection(self, gNodeFrom, gNodeTo):
 		self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
 
 # ======================================================

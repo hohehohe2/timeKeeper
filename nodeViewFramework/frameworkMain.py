@@ -209,13 +209,6 @@ class GCanvas(QtWidgets.QGraphicsScene):
 		# NOTE: so let's close our eyes for now.
 		GConnection(gNodeFrom, gNodeTo)
 
-	def _getItemAtPosition(self, event):
-		"""
-		Returns an GraphicsItem, or None if not item exists on the (mouse) event position
-		You may need to check if the item is of the type you are looking for
-		"""
-		return self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
-
 	def __showArrow(self, event):
 		self.__connectionCreationShape.setArrowTip(event.scenePos())
 		self.update()
