@@ -118,7 +118,9 @@ class GTaskCanvas(GCanvas):
 			self._addNetwork([], (data,))
 
 	def _createConnection(self, gNodeFrom, gNodeTo):
-		self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
+		connectableNodeType = (GTaskNode, GTaskDotNode)
+		if isinstance(gNodeFrom, connectableNodeType) and isinstance(gNodeTo, connectableNodeType):
+			self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
 
 # ======================================================
 class GTaskNode(GRectNode):
