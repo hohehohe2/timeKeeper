@@ -12,6 +12,16 @@ class MTaskModel(Observable):
 	def getRoot(self):
 		return self.__theRoot
 
+	def getConnections(self, limitUnderThisChildren=None):
+		if limitUnderThisChildren:
+			connections = []
+			for connection in self.__connections:
+				if connection.getFrom().getParent() == limitUnderThisChildren:
+					connections.append(connection)
+			return connections
+		else:
+			return self.__connections
+
 	def addTaskNode(self, parent):
 		return self.__addNode(parent, MTaskNode, 'createTask')
 

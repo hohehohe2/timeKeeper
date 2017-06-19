@@ -16,6 +16,8 @@ class GTaskCanvas(GCanvas):
 		super(GTaskCanvas, self).__init__(*args, **kargs)
 		self.__mTaskModel = mTaskModel
 		mTaskModel.addObserver(self) # Observe mTask to receive node and connection creation event.
+		self.views()[0].setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+		self.views()[0].destroyed.connect(self.__onDestroyed)
 
 		if rootMTaskNode:
 			self.__rootMTaskNode = rootMTaskNode
@@ -38,20 +40,24 @@ class GTaskCanvas(GCanvas):
 			elif event.key() == QtCore.Qt.Key_D:
 				node = self.__mTaskModel.addTaskDotNode(self.__rootMTaskNode)
 				node.setAttr('pos', pos)
-			# elif event.key() == QtCore.Qt.Key_C:
-			# 	gNodeFrom, gNodeTo = self.selectedItems() # TODO: selectedItems() has no order
-			# 	print self.selectedItems()
-			# 	self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
+			elif event.key() == QtCore.Qt.Key_U:
+				if self.__rootMTaskNode.getParent():
+					self.__resetNetwork(self.__rootMTaskNode.getParent())
 
 		self.update()
 
-	def resetNetwork(self, rootMTaskNode, connections):
+	def mouseDoubleClickEvent(self, event):
+		itemFrom = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
+		if isinstance(itemFrom, GTaskNode):
+			self.__resetNetwork(itemFrom.getMItem());
+
+	def __resetNetwork(self, rootMTaskNode):
 		"""
 		Make this canvas show the network under rootTaskNode
-		connections where either of the node is not a direct child of rootTaskNode are ignored
 		"""
 		self.clear()
 		self.__rootMTaskNode = rootMTaskNode
+		connections = self.__mTaskModel.getConnections(rootMTaskNode)
 		self._addNetwork(rootMTaskNode.getChildren(), connections)
 
 	def _addNetwork(self, mNodes, mConnections):
@@ -122,6 +128,9 @@ class GTaskCanvas(GCanvas):
 		if isinstance(gNodeFrom, connectableNodeType) and isinstance(gNodeTo, connectableNodeType):
 			self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
 
+	def __onDestroyed(self):
+		self.__mTaskModel.removeObserver(self)
+
 # ======================================================
 class GTaskNode(GRectNode):
 
@@ -140,6 +149,9 @@ class GTaskNode(GRectNode):
 
 	def __init__(self, canvas, mTaskNode):
 		super(GTaskNode, self).__init__(canvas)
+
+		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+		self.destroyed.connect(self.__onDestroyed)
 
 		self.__mNode = mTaskNode
 		mTaskNode.addObserver(self)
@@ -250,6 +262,9 @@ class GTaskNode(GRectNode):
 		finally:
 			self.__isDescriptionChanging = False
 
+	def __onDestroyed(self):
+		self.__mNode.removeObserver(self)
+
 # ------------------------------------------------------
 class GTaskDotNode(GDotNode):
 
@@ -259,6 +274,9 @@ class GTaskDotNode(GDotNode):
 		mTaskDotNode.addObserver(self)
 		self.__isPosChanging = False
 		self.geometryChanged.connect(self.__onGeometryChanged)
+
+		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+		self.destroyed.connect(self.__onDestroyed)
 
 	def getMItem(self):
 		return self.__mNode
@@ -287,6 +305,9 @@ class GTaskDotNode(GDotNode):
 		pos = self.pos()
 		self.__mNode.setAttr('pos', (pos.x(), pos.y()))
 
+	def __onDestroyed(self):
+		self.__mNode.removeObserver(self)
+
 # ------------------------------------------------------
 class GTaskConnection(GConnection):
 
@@ -308,6 +329,9 @@ class GTaskConnection(GConnection):
 		super(GTaskConnection, self).__init__(gNodeFrom, gNodeTo)
 		self.__mNode = mConnection
 		mConnection.addObserver(self)
+
+		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+		self.destroyed.connect(self.__onDestroyed)
 
 	def isValid(self):
 		return bool(self.__mNode)
@@ -337,6 +361,10 @@ class GTaskConnection(GConnection):
 		if event == 'deleted':
 			super(GTaskConnection, self).delete()
 
+	# Qt event callbacks.
+
+	def __onDestroyed(self):
+		self.__mNode.removeObserver(self)
 
 # ======================================================
 if __name__ == '__main__':
@@ -376,8 +404,6 @@ if __name__ == '__main__':
 	pickledNetwork = createNetwork()
 	import cPickle as pickle
 	root, pt1, pt2, ct1, ct2, gt1 = pickle.loads(pickledNetwork)
-
-	#canvas.resetNetwork(root, ())
 
 	ct1.setParent(model.getRoot())
 	ct2.setParent(model.getRoot())
