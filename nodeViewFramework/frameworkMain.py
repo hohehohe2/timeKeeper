@@ -121,9 +121,7 @@ class _GArrowShapeBase(QtWidgets.QGraphicsWidget, PaintConfigMixin):
 		arrowHead = self.__getArrowHeadPolygon(arrowTail, arrowTip)
 		painter.drawPolygon(arrowHead);
 
-# ======================================================
-# nody main classes
-
+# ------------------------------------------------------
 class _GConnectionCreationShape(_GArrowShapeBase):
 
 	def setArrowTail(self, arrowTail):
@@ -142,6 +140,9 @@ class _GConnectionCreationShape(_GArrowShapeBase):
 
 	def paint(self, painter, option, widget):
 		self._paint(painter, option, widget, self.__arrowTail, self.__arrowTip, True)
+
+# ======================================================
+# nody main classes
 
 class GCanvas(QtWidgets.QGraphicsScene):
 
