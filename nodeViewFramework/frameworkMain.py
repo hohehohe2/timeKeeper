@@ -164,7 +164,7 @@ class GCanvas(QtWidgets.QGraphicsScene):
 		return maxValue
 
 	def mousePressEvent(self, event):
-		if event.button() == QtCore.Qt.LeftButton and event.modifiers() == QtCore.Qt.ControlModifier:
+		if event.button() == QtCore.Qt.RightButton:
 			itemFrom = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
 			if isinstance(itemFrom, GNodeBase):
 				self.__gNodeFrom = itemFrom
@@ -191,7 +191,7 @@ class GCanvas(QtWidgets.QGraphicsScene):
 		self.__connectionCreationShape = None
 		self.update()
 
-		if not event.button() == QtCore.Qt.LeftButton:
+		if not event.button() == QtCore.Qt.RightButton:
 			return 
 
 		itemTo = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
