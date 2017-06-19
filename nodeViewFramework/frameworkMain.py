@@ -24,8 +24,124 @@ def _getLineTanNormal(line):
 
 	return tangentVector, normalVector
 
+# ------------------------------------------------------
+class _GArrowShapeBase(QtWidgets.QGraphicsWidget, PaintConfigMixin):
+
+	_paintStyle = PaintStyle()
+	_config = DynamicMergeableDict(
+		arrowHeadSize = 5,
+		selectionLineWidth = 4,
+		)
+
+	def __init__(self, canvas):
+		super(_GArrowShapeBase, self).__init__()
+
+		canvas.addItem(self)
+
+		self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)
+		# TODO: Fix the problem where a node is occluded by another node and the connection from/to the node is not
+		self.setZValue(canvas.getMaxZValue() + 1)
+		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+		self.__isDeleted = False
+
+	def delete(self):
+		"""
+		Deletes this connection
+		"""
+		self.close()
+		self.__isDeleted = True
+
+	def __getArrowHeadPolygon(self, arrowTail, arrowTip):
+		line = QtCore.QLineF(arrowTail, arrowTip)
+		tangentVector, normalVector = _getLineTanNormal(line)
+
+		arrowHeadSize = self._config['arrowHeadSize']
+		baseCenter = arrowTip - tangentVector * arrowHeadSize * 2
+		baseCorner1 = baseCenter - normalVector * arrowHeadSize
+		baseCorner2 = baseCenter + normalVector * arrowHeadSize
+
+		arrowHead = QtGui.QPolygonF()
+		arrowHead.append(arrowTip)
+		arrowHead.append(baseCorner1)
+		arrowHead.append(baseCorner2)
+
+		return arrowHead
+
+	# Qt callbacks
+
+	def _shape(self, arrowTail, arrowTip):
+		path = QtGui.QPainterPath()
+		if (not arrowTip) or (not arrowTail):
+			return path
+
+		line = QtCore.QLineF(arrowTail, arrowTip)
+		tangentVectorUnused, normalVector = _getLineTanNormal(line)
+		linewidth = self._config['selectionLineWidth']
+
+		arrowHead = self.__getArrowHeadPolygon(arrowTail, arrowTip)
+		path.addPolygon(arrowHead)
+
+		# Make the line thicker for easy selection
+
+		linePolygon = QtGui.QPolygonF()
+		linePolygon.append(arrowTail - normalVector * linewidth)
+		linePolygon.append(arrowTail + normalVector * linewidth)
+		linePolygon.append(arrowTip + normalVector * linewidth)
+		linePolygon.append(arrowTip - normalVector * linewidth)
+
+		path.addPolygon(linePolygon)
+
+		return path
+
+	def _boundingRect(self, arrowTail, arrowTip):
+		if (not arrowTip) or (not arrowTail):
+			return QtCore.QRectF()
+
+		# boundingRect() is called after self.close() inside delete() and before the node is actually deleted
+		# Disable boundingRect() code execution if it has been deleted().
+		if self.__isDeleted:
+			return QtCore.QRectF()
+
+		rect = QtCore.QRectF(arrowTail, arrowTip)
+
+		arrowHead = self.__getArrowHeadPolygon(arrowTail, arrowTip)
+		rect = rect.united(arrowHead.boundingRect())
+
+		return rect
+
+	def _paint(self, painter, option, widget, arrowTail, arrowTip, isSelected):
+		if (not arrowTip) or (not arrowTail):
+			return
+
+		self._paintStyle.applyBorderPen(painter, isSelected)
+		self._paintStyle.applyBgBrush(painter, isSelected)
+		painter.drawLine(arrowTail, arrowTip)
+
+		self._paintStyle.applyBorderBrush(painter, isSelected)
+		arrowHead = self.__getArrowHeadPolygon(arrowTail, arrowTip)
+		painter.drawPolygon(arrowHead);
+
 # ======================================================
 # nody main classes
+
+class _GConnectionCreationShape(_GArrowShapeBase):
+
+	def setArrowTail(self, arrowTail):
+		self.__arrowTail = arrowTail
+
+	def setArrowTip(self, arrowTip):
+		self.__arrowTip = arrowTip
+
+	# Qt callbacks
+
+	def shape(self):
+		return self._shape(self.__arrowTail, self.__arrowTip)
+
+	def boundingRect(self):
+		return self._boundingRect(self.__arrowTail, self.__arrowTip)
+
+	def paint(self, painter, option, widget):
+		self._paint(painter, option, widget, self.__arrowTail, self.__arrowTip, True)
 
 class GCanvas(QtWidgets.QGraphicsScene):
 
@@ -33,6 +149,8 @@ class GCanvas(QtWidgets.QGraphicsScene):
 		super(GCanvas, self).__init__(*args, **kargs)
 		self.__view = _GView(None)
 		self.__view.setScene(self)
+		self.__gNodeFrom = None
+		self.__connectionCreationShape = None
 
 	def show(self):
 		self.__view.show()
@@ -43,6 +161,61 @@ class GCanvas(QtWidgets.QGraphicsScene):
 			if item.zValue() > maxValue:
 				maxValue = item.zValue()
 		return maxValue
+
+	def mousePressEvent(self, event):
+		if event.button() == QtCore.Qt.LeftButton and event.modifiers() == QtCore.Qt.ControlModifier:
+			itemFrom = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
+			if isinstance(itemFrom, GNodeBase):
+				self.__gNodeFrom = itemFrom
+				self.__connectionCreationShape = _GConnectionCreationShape(self)
+				self.__connectionCreationShape.setArrowTail(self.__gNodeFrom._getCenter())
+				self.__connectionCreationShape.setArrowTip(self.__gNodeFrom._getCenter())
+		else:
+			super(GCanvas, self).mousePressEvent(event)
+
+	def mouseMoveEvent(self, event):
+		if self.__gNodeFrom:
+			self.__showArrow(event)
+		else:
+			super(GCanvas, self).mouseMoveEvent(event)
+
+	def mouseReleaseEvent(self, event):
+		if not self.__gNodeFrom:
+			super(GCanvas, self).mouseReleaseEvent(event)
+			return
+
+		gnodeFrom = self.__gNodeFrom
+		self.__gNodeFrom = None
+		self.__connectionCreationShape.delete()
+		self.__connectionCreationShape = None
+		self.update()
+
+		if not event.button() == QtCore.Qt.LeftButton:
+			return 
+
+		itemTo = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
+		if itemTo and isinstance(itemTo, GNodeBase) and itemTo != gnodeFrom:
+			self._createConnection(gnodeFrom, itemTo)
+
+	def _createConnection(self, gNodeFrom, gNodeTo):
+		"""
+		Reimplement this to create application specific connection
+		"""
+		# NOTE: It creates a connection even if already exists.
+		# NOTE: Applications that use this framework almost always overrides this method
+		# NOTE: so let's close our eyes for now.
+		GConnection(gNodeFrom, gNodeTo)
+
+	def _getItemAtPosition(self, event):
+		"""
+		Returns an GraphicsItem, or None if not item exists on the (mouse) event position
+		You may need to check if the item is of the type you are looking for
+		"""
+		return self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
+
+	def __showArrow(self, event):
+		self.__connectionCreationShape.setArrowTip(event.scenePos())
+		self.update()
 
 # ------------------------------------------------------
 class _GView(QtWidgets.QGraphicsView):
@@ -135,31 +308,18 @@ class GNodeBase(QtWidgets.QGraphicsWidget, PaintConfigMixin):
 		return super(GNodeBase, self).itemChange(change, value)
 
 # ------------------------------------------------------
-class GConnection(QtWidgets.QGraphicsWidget, PaintConfigMixin):
-
-	_paintStyle = PaintStyle()
-	_config = DynamicMergeableDict(
-		arrowHeadSize = 5,
-		selectionLineWidth = 4,
-		)
+class GConnection(_GArrowShapeBase):
 
 	def __init__(self, nodeFrom, nodeTo):
-		super(GConnection, self).__init__()
-
 		canvas = nodeFrom.scene()
 		assert(canvas == nodeTo.scene())
-		canvas.addItem(self)
+
+		super(GConnection, self).__init__(canvas)
 
 		nodeFrom._addConnection(self)
 		nodeTo._addConnection(self)
-
 		self.__nodeFrom = nodeFrom
 		self.__nodeTo = nodeTo
-
-		self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)
-		# TODO: Fix the problem where a node is occluded by another node and the connection from/to the node is not
-		self.setZValue(canvas.getMaxZValue() + 1)
-		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
 
 	def delete(self):
 		"""
@@ -167,93 +327,36 @@ class GConnection(QtWidgets.QGraphicsWidget, PaintConfigMixin):
 		"""
 		self.__nodeFrom._removeConnection(self)
 		self.__nodeTo._removeConnection(self)
-		self.close()
+		super(GConnection, self).delete()
 		self.__nodeFrom = None
 		self.__nodeTo = None
-
-	def __getArrowHeadPolygon(self):
-		line = QtCore.QLineF(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
-		arrowTip = self.__nodeTo._getIntersectPoint(line, False)
-		if not arrowTip:
-			return
-
-		tangentVector, normalVector = _getLineTanNormal(line)
-
-		arrowHeadSize = self._config['arrowHeadSize']
-		baseCenter = arrowTip - tangentVector * arrowHeadSize * 2
-		baseCorner1 = baseCenter - normalVector * arrowHeadSize
-		baseCorner2 = baseCenter + normalVector * arrowHeadSize
-
-		arrowHead = QtGui.QPolygonF()
-		arrowHead.append(arrowTip)
-		arrowHead.append(baseCorner1)
-		arrowHead.append(baseCorner2)
-
-		return arrowHead
 
 	# Qt callbacks
 
 	def shape(self):
-		path = QtGui.QPainterPath()
-		arrowHead = self.__getArrowHeadPolygon()
-		if arrowHead:
-			path.addPolygon(arrowHead)
-
-		# Make the line thicker for easy selection
-
-		linewidth = self._config['selectionLineWidth']
-
-		line = QtCore.QLineF(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
-		arrowTip = self.__nodeTo._getIntersectPoint(line, False)
-		arrowTail = self.__nodeFrom._getIntersectPoint(line, True)
-		if (not arrowTip) or (not arrowTail):
-			return path
-
-		tangentVector, normalVector = _getLineTanNormal(line)
-
-		linePolygon = QtGui.QPolygonF()
-		linePolygon.append(arrowTail - normalVector * linewidth)
-		linePolygon.append(arrowTail + normalVector * linewidth)
-		linePolygon.append(arrowTip + normalVector * linewidth)
-		linePolygon.append(arrowTip - normalVector * linewidth)
-
-		path.addPolygon(linePolygon)
-
-		return path
+		arrowTail, arrowTip = self.__getArrowTailTip()
+		return self._shape(arrowTail, arrowTip)
 
 	def boundingRect(self):
-
 		# boundingRect() is called after self.close() inside delete() and before the node is actually deleted
 		# Disable boundingRect() code execution if it has been deleted().
 		# __nodeFrom is None if and only if delete() has been called
 		if not self.__nodeFrom:
 			return QtCore.QRectF()
 
-		rect = QtCore.QRectF(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
-
-		arrowHead = self.__getArrowHeadPolygon()
-
-		if arrowHead:
-			return rect.united(arrowHead.boundingRect())
-		else:
-			return rect
+		arrowTail, arrowTip = self.__getArrowTailTip()
+		return self._boundingRect(arrowTail, arrowTip)
 
 	def paint(self, painter, option, widget):
+		arrowTail, arrowTip = self.__getArrowTailTip()
 		isSelected = self.isSelected()
-		self._paintStyle.applyBorderPen(painter, isSelected)
-		self._paintStyle.applyBgBrush(painter, isSelected)
+		self._paint(painter, option, widget, arrowTail, arrowTip, isSelected)
 
+	def __getArrowTailTip(self):
 		line = QtCore.QLineF(self.__nodeFrom._getCenter(), self.__nodeTo._getCenter())
-		arrowTip = self.__nodeTo._getIntersectPoint(line, False)
 		arrowTail = self.__nodeFrom._getIntersectPoint(line, True)
-		if (not arrowTip) or (not arrowTail):
-			return
-
-		painter.drawLine(arrowTail, arrowTip)
-		arrowHead = self.__getArrowHeadPolygon()
-		if arrowHead:
-			self._paintStyle.applyBorderBrush(painter, isSelected)
-			painter.drawPolygon(arrowHead);
+		arrowTip = self.__nodeTo._getIntersectPoint(line, False)
+		return arrowTail, arrowTip
 
 # ======================================================
 # Concrete node classes
@@ -362,7 +465,6 @@ class GRectNode(GNodeBase):
 		super(GRectNode, self).mousePressEvent(event)
 
 		self.__doDragX, self.__doDragY = self.__isDraggable(event)
-
 		if self.__doDragX or self.__doDragY:
 			self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, False)
 

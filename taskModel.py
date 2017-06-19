@@ -19,8 +19,19 @@ class MTaskModel(Observable):
 		return self.__addNode(parent, MTaskDotNode, 'createDot')
 
 	def addTaskConnection(self, mNodeFrom, mNodeTo):
+		"""
+		Create connection and return it.
+		Returns None if the connection already exists
+		"""
 		self.__checkNode(mNodeFrom)
 		assert(mNodeFrom.getParent() == mNodeTo.getParent())
+
+		for connection in self.__connections:
+			if connection.getFrom() == mNodeFrom and connection.getTo() == mNodeTo:
+				return None
+			if connection.getFrom() == mNodeTo and connection.getTo() == mNodeFrom:
+				return None
+
 		connection = MTaskConnection(mNodeFrom, mNodeTo)
 		self.__connections.append(connection)
 		connection.addObserver(self)

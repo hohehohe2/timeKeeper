@@ -36,11 +36,10 @@ class GTaskCanvas(GCanvas):
 			elif event.key() == QtCore.Qt.Key_D:
 				node = self.__mTaskModel.addTaskDotNode(self.__rootMTaskNode)
 				node.setAttr('pos', pos)
-			elif event.key() == QtCore.Qt.Key_C:
-				gNodeFrom, gNodeTo = self.selectedItems() # TODO: selectedItems() has no order
-				print self.selectedItems()
-				self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
-
+			# elif event.key() == QtCore.Qt.Key_C:
+			# 	gNodeFrom, gNodeTo = self.selectedItems() # TODO: selectedItems() has no order
+			# 	print self.selectedItems()
+			# 	self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
 
 		self.update()
 
@@ -115,6 +114,9 @@ class GTaskCanvas(GCanvas):
 			self._addNetwork([data], ())
 		elif event == 'createConnection':
 			self._addNetwork([], (data,))
+
+	def _createConnection(self, gNodeFrom, gNodeTo):		
+		self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
 
 # ======================================================
 if __name__ == '__main__':
