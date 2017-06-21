@@ -152,6 +152,9 @@ class GCanvas(QtWidgets.QGraphicsScene):
 		self.__view.setScene(self)
 		self.__gNodeFrom = None
 		self.__connectionCreationShape = None
+		self.__rubberBandStartPos = None
+		self.__rubberBand = QtWidgets.QRubberBand(QtWidgets.QRubberBand.Rectangle, self.views()[0])
+		self.__rubberBand.hide()
 
 	def show(self):
 		self.__view.show()
@@ -164,6 +167,7 @@ class GCanvas(QtWidgets.QGraphicsScene):
 		return maxValue
 
 	def mousePressEvent(self, event):
+
 		if event.button() == QtCore.Qt.RightButton:
 			itemFrom = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
 			if isinstance(itemFrom, GNodeBase):
@@ -171,32 +175,57 @@ class GCanvas(QtWidgets.QGraphicsScene):
 				self.__connectionCreationShape = _GConnectionCreationShape(self)
 				self.__connectionCreationShape.setArrowTail(self.__gNodeFrom._getCenter())
 				self.__connectionCreationShape.setArrowTip(self.__gNodeFrom._getCenter())
-		else:
-			super(GCanvas, self).mousePressEvent(event)
+
+		elif event.button() == QtCore.Qt.LeftButton:
+				if not self.itemAt(event.scenePos().toPoint(), QtGui.QTransform()):
+					self.__rubberBandStartPos = self.views()[0].mapFromScene(event.scenePos())
+
+		super(GCanvas, self).mousePressEvent(event)
 
 	def mouseMoveEvent(self, event):
+
 		if self.__gNodeFrom:
 			self.__showArrow(event)
-		else:
-			super(GCanvas, self).mouseMoveEvent(event)
+
+		elif self.__rubberBandStartPos:
+			sPos = self.__rubberBandStartPos
+			ePos = self.views()[0].mapFromScene(event.scenePos())
+			xMin, xMax = min(sPos.x(), ePos.x()), max(sPos.x(), ePos.x())
+			yMin, yMax = min(sPos.y(), ePos.y()), max(sPos.y(), ePos.y())
+			self.__rubberBand.setGeometry(xMin, yMin, xMax - xMin, yMax - yMin)
+			self.__rubberBand.show()
+
+		super(GCanvas, self).mouseMoveEvent(event)
 
 	def mouseReleaseEvent(self, event):
-		if not self.__gNodeFrom:
-			super(GCanvas, self).mouseReleaseEvent(event)
-			return
 
-		gnodeFrom = self.__gNodeFrom
-		self.__gNodeFrom = None
-		self.__connectionCreationShape.delete()
-		self.__connectionCreationShape = None
-		self.update()
+		if self.__gNodeFrom:
+			gnodeFrom = self.__gNodeFrom
+			self.__gNodeFrom = None
+			self.__connectionCreationShape.delete()
+			self.__connectionCreationShape = None
 
-		if not event.button() == QtCore.Qt.RightButton:
-			return 
+			itemTo = self._findNodeAtPosition(event.scenePos())
+			if itemTo and itemTo != gnodeFrom:
+				self._createConnection(gnodeFrom, itemTo)
 
-		itemTo = self._findNodeAtPosition(event.scenePos())
-		if itemTo and itemTo != gnodeFrom:
-			self._createConnection(gnodeFrom, itemTo)
+			self.update()
+
+		elif self.__rubberBand.isVisible():
+			view = self.views()[0]
+			rect = view.mapToScene(self.__rubberBand.geometry())
+
+			painterPath = QtGui.QPainterPath()
+			painterPath.addPolygon(rect)
+
+			self.setSelectionArea(painterPath)
+
+			self.update()
+
+		self.__rubberBand.hide()
+		self.__rubberBandStartPos = None
+
+		super(GCanvas, self).mouseReleaseEvent(event)
 
 	def _findNodeAtPosition(self, pos):
 		item = self.itemAt(pos.toPoint(), QtGui.QTransform())
@@ -513,7 +542,7 @@ class GDotNode(GNodeBase):
 
 	_paintStyle = PaintStyle()
 	_config = DynamicMergeableDict(
-		dotRadius=10,
+		dotRadius=7,
 		)
 
 	def __init__(self, canvas, x=0, y=0):

@@ -364,6 +364,16 @@ class GTaskNode(GRectNode):
 # ------------------------------------------------------
 class GTaskDotNode(GDotNode):
 
+	__style = {
+		'bgPaint' : {
+			'col' : [150, 150, 150, 255],
+			'colSel' : [150, 150, 150, 255],
+			}
+		}
+
+	_paintStyle = PaintStyle(__style, False)
+	_paintStyle.setBaseStyle(GDotNode._paintStyle)
+
 	def __init__(self, canvas, mTaskDotNode):
 		super(GTaskDotNode, self).__init__(canvas)
 		self.__mNode = mTaskDotNode
