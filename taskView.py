@@ -469,47 +469,11 @@ if __name__ == '__main__':
 	from Qt import QtWidgets
 	from taskModel import MTaskModel, MTaskConnection
 
-	def createNetwork():
-
-		root = MTaskNode()
-		pt1 = MTaskNode(root)
-		pt2 = MTaskNode(root)
-		ct1 = MTaskNode(pt1)
-		ct2 = MTaskNode(pt1)
-		gt1 = MTaskNode(ct2)
-
-		pt1.setAttr('pos', (0, 60))
-		pt2.setAttr('pos', (170, 60))
-		ct1.setAttr('pos', (0, 120))
-		ct2.setAttr('pos', (170, 120))
-		gt1.setAttr('pos', (170, 180))
-
-		ct1.setAttr('actual', 3.0)
-		gt1.setAttr('actual', 4.0)
-
-		from utils.treeNode import serialize
-		return serialize([root, pt1, pt2, ct1, ct2, gt1])
-
 	global app
-
 	app = QtWidgets.QApplication(sys.argv)
-
 	model = MTaskModel()
 	canvas = GTaskCanvas(model)
-	canvas2 = GTaskCanvas(model)
-
-	pickledNetwork = createNetwork()
-	import cPickle as pickle
-	root, pt1, pt2, ct1, ct2, gt1 = pickle.loads(pickledNetwork)
-
-	ct1.setParent(model.getRoot())
-	ct2.setParent(model.getRoot())
-	connections = (MTaskConnection(ct1, ct2),)
-	canvas._GTaskCanvas__addNetwork([ct1, ct2], connections) # Temporal, call model.addNode(), addConnection() etc.
-	canvas2._GTaskCanvas__addNetwork([ct1, ct2], connections)
-
 	canvas.show()
-	canvas2.show()
 	app.exec_()
 
 # ======================================================
