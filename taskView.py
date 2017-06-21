@@ -16,15 +16,26 @@ class GTaskCanvas(GCanvas):
 		super(GTaskCanvas, self).__init__(*args, **kargs)
 		self.__mTaskModel = mTaskModel
 		mTaskModel.addObserver(self) # Observe mTask to receive node and connection creation event.
-		self.views()[0].setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
-		self.views()[0].destroyed.connect(self.__onDestroyed)
+		view = self.views()[0]
+		view.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+		view.destroyed.connect(self.__onDestroyed)
 
 		if rootMTaskNode:
 			self.__rootMTaskNode = rootMTaskNode
 		else:
 			self.__rootMTaskNode = mTaskModel.getRoot()
 
-		self.views()[0].resize(1000, 600)
+		view.resize(1000, 600)
+
+	def drawBackground(self, painter, rect):
+		pathStr = self.__rootMTaskNode.getPathStr()
+		font = QtGui.QFont()
+		pen = QtGui.QPen()
+		pen.setColor(QtGui.QColor(200, 200, 200, 255))
+		painter.setPen(pen)
+		font.setPointSize(25)
+		painter.setFont(font)
+		painter.drawText(rect, pathStr)
 
 	def keyPressEvent(self, event):
 		super(GTaskCanvas, self).keyPressEvent(event)
@@ -98,6 +109,20 @@ class GTaskCanvas(GCanvas):
 						'done' : 'waiting',
 					}[status]
 					mNode.setAttr('status', newStatus)
+			elif event.key() == QtCore.Qt.Key_M: # Myouji
+				gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
+				if not gNode:
+					return
+
+				newName, isOk = QtWidgets.QInputDialog.getText(
+					None,
+					'Rename node',
+					"New name:", QtWidgets.QLineEdit.Normal,
+					'task')
+				if not isOk:
+					return
+
+				self.__mTaskModel.assignUniqueName(gNode.getMItem(), newName)
 
 		self.update()
 
@@ -210,6 +235,8 @@ class GTaskCanvas(GCanvas):
 				self.__resetNetwork()
 		elif event == 'changeRoot':
 			self.__resetNetwork(self.__mTaskModel.getRoot())
+		elif event == 'renameTaskNode':
+			self.update()
 
 	def _createConnection(self, gNodeFrom, gNodeTo):
 		connectableNodeType = (GTaskNode, GTaskDotNode)
@@ -222,6 +249,8 @@ class GTaskCanvas(GCanvas):
 	def _onTaskNodeDeleted(self, gTaskNode):
 		if gTaskNode.getMItem() == self.__rootMTaskNode:
 			self.__resetNetwork()
+
+
 
 # ======================================================
 class GTaskNode(GRectNode):
@@ -379,6 +408,12 @@ class GTaskNode(GRectNode):
 
 	def __onDestroyed(self):
 		self.__mNode.removeObserver(self)
+
+	def paint(self, painter, option, widget):
+		super(GTaskNode, self).paint(painter, option, widget)
+		self._paintStyle.applyBorderPen(painter, False)
+		self._paintStyle.applyBgBrush(painter, False)
+		painter.drawText(self.boundingRect(), self.getMItem().getName())
 
 # ------------------------------------------------------
 class GTaskDotNode(GDotNode):

@@ -67,6 +67,10 @@ class MTaskModel(Observable):
 			self.__connections.append(connection)
 			self._notify('createConnection', connection)
 
+		for node in nodes:
+			if isinstance(node, MTaskNode):
+				self.assignUniqueName(node, node.getName())
+
 		self.__observe(nodes, connections)
 
 		return nodes, connections
@@ -90,6 +94,7 @@ class MTaskModel(Observable):
 
 	def createTaskNode(self, parent):
 		node = self.__createNode(parent, MTaskNode, 'createTask')
+		self.assignUniqueName(node)
 		node.addObserver(self)
 		return node
 
@@ -126,9 +131,6 @@ class MTaskModel(Observable):
 		else:
 			self.__checkNode(parent)
 
-		# Node can remove itself from the tree on deletion so MTaskModel does not observe nodes
-		#node.addObserver(self)
-
 		self._notify(eventToEmit, node) # For canvas update, nodes/connections notify their deletion by themselves
 
 		return node
@@ -144,6 +146,11 @@ class MTaskModel(Observable):
 			assert(False and "parent is not under the root")
 
 	def _onNotify(self, notifier, event, data):
+		if event == 'attrChanged':
+			attrName, oldValue, newValue = data
+			if attrName == 'name':
+				assert(isinstance(notifier, MTaskNode))
+				self._notify('renameTaskNode', notifier) # For canvas update
 		if event == 'deleted':
 			if notifier in self.__connections:
 				self.__connections.remove(notifier)
@@ -151,20 +158,58 @@ class MTaskModel(Observable):
 				assert(isinstance(notifier, MTaskNode))
 				self._notify('deleteTaskNode', notifier) # For canvas update
 
+	@staticmethod
+	def assignUniqueName(node, prefix=None):
+		parent = node.getParent()
+		if not parent:
+			return '' # Root node name is ''
+
+		existingNames = [x.getName() for x in parent.getChildren() if isinstance(x, MTaskNode)]
+
+		if prefix and prefix not in existingNames:
+			node.setName(prefix)
+			return
+
+		counter = 0
+		if prefix:
+			while prefix[-1].isdigit():
+				prefix = prefix[:-1]
+		if not prefix:
+			prefix = 'task'
+
+		while prefix + str(counter) in existingNames:
+			counter += 1
+
+		newName = prefix + str(counter)
+		node.setName(newName)
+
 # ------------------------------------------------------
 class MTaskNode(TreeNode):
-	def __init__(self, parent=None):
+	def __init__(self, parent=None, name=''):
 		super(MTaskNode, self).__init__(parent)
+		self.setAttr('name', name) # Node name
 		self.setAttr('description', '') # Long description
 		self.setAttr('estimated', 0) # Estimated time
 		self.setAttr('actual', 0) # Actual time needed
 		self.setAttr('status', 'waiting') # 'waiting', 'wip', 'done'
-		self.setAttr('isCurrent', False) # True if now working on it
 
 		self.setAttr('pos', (0, 0))
 		self.setAttr('size', (0, 0))
 
 		self.addObserver(self)
+
+	def setName(self, name):
+		return self.setAttr('name', name)
+
+	def getName(self):
+		return self.getAttr('name')
+
+	def getPathStr(self):
+		parent = self.getParent()
+		parentPath = parent.getPathStr() if parent else ''
+		if parentPath != '/':
+			parentPath += '/'
+		return parentPath + self.getName()
 
 	def isNode(self):
 		return True
