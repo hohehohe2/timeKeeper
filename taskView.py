@@ -44,9 +44,13 @@ class GTaskCanvas(GCanvas):
 				if self.__rootMTaskNode.getParent():
 					self.__resetNetwork(self.__rootMTaskNode.getParent())
 			elif event.key() == QtCore.Qt.Key_S:
-				self.__mTaskModel.save(None)
+				filePath = QtWidgets.QFileDialog.getSaveFileName(None, 'Save File', filter=("time keeper (*.tkpickle)"))
+				if filePath[0]:
+					self.__mTaskModel.save(filePath[0])
 			elif event.key() == QtCore.Qt.Key_O:
-				self.__mTaskModel.load(None)
+				filePath = QtWidgets.QFileDialog.getOpenFileName(None, 'Open file', filter=("TimeKeeper (*.tkpickle)"))
+				if filePath[0]:
+					self.__mTaskModel.load(filePath[0])
 			elif event.key() == QtCore.Qt.Key_C:
 				selectedItems = self.selectedItems()
 				selectedItems = [x.getMItem() for x in selectedItems]

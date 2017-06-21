@@ -31,10 +31,12 @@ class MTaskModel(Observable):
 		assert(not self.__connections)
 
 	def save(self, filePath):
-		self.__TODOTako =pickle.dumps((self.__theRoot, self.__connections))
+		with open(filePath, 'wb') as f:
+			pickle.dump((self.__theRoot, self.__connections), f)
 
 	def load(self, filePath):
-		theRoot, connections = pickle.loads(self.__TODOTako)
+		with open(filePath) as f:
+			theRoot, connections = pickle.load(f)
 		self.__theRoot = theRoot
 		self.__connections = connections
 		self.__observe([theRoot], connections)
