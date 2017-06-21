@@ -194,14 +194,20 @@ class GCanvas(QtWidgets.QGraphicsScene):
 		if not event.button() == QtCore.Qt.RightButton:
 			return 
 
-		itemTo = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
-		if not itemTo:
+		itemTo = self._findNodeAtPosition(event.scenePos())
+		if itemTo and itemTo != gnodeFrom:
+			self._createConnection(gnodeFrom, itemTo)
+
+	def _findNodeAtPosition(self, pos):
+		item = self.itemAt(pos.toPoint(), QtGui.QTransform())
+		if not item:
 			return
 
-		while itemTo.parent():
-			itemTo = itemTo.parent()
-		if itemTo and isinstance(itemTo, GNodeBase) and itemTo != gnodeFrom:
-			self._createConnection(gnodeFrom, itemTo)
+		while item.parent():
+			item = item.parent()
+
+		if isinstance(item, GNodeBase):
+			return item
 
 	def _createConnection(self, gNodeFrom, gNodeTo):
 		"""

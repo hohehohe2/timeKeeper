@@ -33,29 +33,29 @@ class GTaskCanvas(GCanvas):
 		if event.modifiers() == QtCore.Qt.ControlModifier:
 			if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
 				self.__deleteSelected()
-			elif event.key() == QtCore.Qt.Key_N:
+			elif event.key() == QtCore.Qt.Key_N: # Node
 				node = self.__mTaskModel.createTaskNode(self.__rootMTaskNode)
 				node.setAttr('pos', pos)
-			elif event.key() == QtCore.Qt.Key_D:
+			elif event.key() == QtCore.Qt.Key_D: # Dot
 				node = self.__mTaskModel.createTaskDotNode(self.__rootMTaskNode)
 				node.setAttr('pos', pos)
-			elif event.key() == QtCore.Qt.Key_U:
+			elif event.key() == QtCore.Qt.Key_U: # Up
 				if self.__rootMTaskNode.getParent():
 					self.__resetNetwork(self.__rootMTaskNode.getParent())
-			elif event.key() == QtCore.Qt.Key_S:
+			elif event.key() == QtCore.Qt.Key_S: # Save
 				filePath = QtWidgets.QFileDialog.getSaveFileName(None, 'Save File', filter=("time keeper (*.tkpickle)"))
 				if filePath[0]:
 					self.__mTaskModel.save(filePath[0])
-			elif event.key() == QtCore.Qt.Key_O:
+			elif event.key() == QtCore.Qt.Key_O: # Open
 				filePath = QtWidgets.QFileDialog.getOpenFileName(None, 'Open file', filter=("TimeKeeper (*.tkpickle)"))
 				if filePath[0]:
 					self.__mTaskModel.load(filePath[0])
-			elif event.key() == QtCore.Qt.Key_X:
+			elif event.key() == QtCore.Qt.Key_X: # Cut
 				self.__copySelected()
 				self.__deleteSelected()
-			elif event.key() == QtCore.Qt.Key_C:
+			elif event.key() == QtCore.Qt.Key_C: # Copy
 				self.__copySelected()
-			elif event.key() == QtCore.Qt.Key_V:
+			elif event.key() == QtCore.Qt.Key_V: # Paste
 				mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
 				self.clearSelection()
 				mToGMapND, mToGMapC = self.__getMItemToGItemMap()
@@ -67,10 +67,23 @@ class GTaskCanvas(GCanvas):
 					gConnection = mToGMapC.get(mConnection)
 					if gConnection:
 						gConnection.setSelected(True)
-			elif event.key() == QtCore.Qt.Key_W:
+			elif event.key() == QtCore.Qt.Key_W: # Window
 				newCanvas = GTaskCanvas(self.__mTaskModel, self.__rootMTaskNode)
 				newCanvas.show()
 				newCanvas.__resetNetwork(self.__rootMTaskNode)
+			elif event.key() == QtCore.Qt.Key_T: # Toggle status
+				gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
+				if not gNode:
+					return
+				mNode = gNode.getMItem()
+				if isinstance(mNode, MTaskNode):
+					status = mNode.getAttr('status')
+					newStatus = {
+						'waiting' : 'wip',
+						'wip' : 'done',
+						'done' : 'waiting',
+					}[status]
+					mNode.setAttr('status', newStatus)
 
 		self.update()
 
@@ -199,21 +212,31 @@ class GTaskCanvas(GCanvas):
 # ======================================================
 class GTaskNode(GRectNode):
 
-	style = {
-	'bgPaint' : {
+	__waitingBgColors = {
 		'col' : [240, 240, 240, 255],
 		'colSel' : [240, 240, 240, 255],
 		}
-	}
+	__wipBgColors = {
+		'col' : [255, 200, 200, 255],
+		'colSel' : [255, 200, 200, 255],
+		}
+	__doneBgColors = {
+		'col' : [150, 150, 150, 255],
+		'colSel' : [150, 150, 150, 255],
+		}
 
-	_paintStyle = PaintStyle(style, False)
-	_paintStyle.setBaseStyle(GRectNode._paintStyle)
+	__style = {
+		'bgPaint' : __waitingBgColors,
+		}
 
 	_config = DynamicMergeableDict(shapeRoundRadius=1)
 	_config.setBase(GRectNode._config)
 
 	def __init__(self, canvas, mTaskNode):
 		super(GTaskNode, self).__init__(canvas)
+
+		self._paintStyle = PaintStyle(self.__style, False)
+		self._paintStyle.setBaseStyle(GRectNode._paintStyle)
 
 		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
 		self.destroyed.connect(self.__onDestroyed)
@@ -298,6 +321,14 @@ class GTaskNode(GRectNode):
 				self.setPos(*newValue)
 			elif attrName == 'size':
 				self.resize(*newValue)
+			elif attrName == 'status':
+				if newValue == 'waiting':
+					bgColors = self.__waitingBgColors
+				elif newValue == 'wip':
+					bgColors = self.__wipBgColors
+				elif newValue == 'done':
+					bgColors = self.__doneBgColors
+				self._paintStyle.setBgBrush(bgColors['col'], bgColors['colSel'])
 		finally:
 			self.__processingAttrNames.remove(attrName)
 
