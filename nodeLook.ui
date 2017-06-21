@@ -27,7 +27,7 @@
     <number>0</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,5,1,5">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,5,1,5,0">
      <property name="sizeConstraint">
       <enum>QLayout::SetNoConstraint</enum>
      </property>
@@ -110,6 +110,33 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QLabel" name="hasChildL">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="lineWidth">
+        <number>0</number>
+       </property>
+       <property name="text">
+        <string>C </string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="indent">
+        <number>0</number>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
@@ -122,6 +149,9 @@
        <width>0</width>
        <height>33</height>
       </size>
+     </property>
+     <property name="undoRedoEnabled">
+      <bool>true</bool>
      </property>
      <property name="readOnly">
       <bool>false</bool>

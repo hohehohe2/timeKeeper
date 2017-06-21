@@ -180,7 +180,7 @@ class MTaskNode(TreeNode):
 	def _onNotify(self, notifier, event, data):
 		if notifier in self.getChildren() and event == 'attrChanged' and data[0] == 'actual':
 			self.__updateActual()
-		if notifier == self and event == 'childRemoved':
+		if notifier == self and (event == 'childRemoved' or event == 'childAdded'):
 			self.__updateActual()
 
 	def __updateActual(self):

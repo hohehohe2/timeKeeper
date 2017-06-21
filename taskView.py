@@ -304,6 +304,7 @@ class GTaskNode(GRectNode):
 	def __setActualEnabled(self):
 		hasChild = bool(self.__mNode.getChildren())
 		self.__ui.actualSB.setEnabled(not hasChild)
+		self.__ui.hasChildL.setVisible(hasChild)
 
 	# Model event callbacks.
 
