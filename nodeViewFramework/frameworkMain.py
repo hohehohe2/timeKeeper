@@ -256,7 +256,6 @@ class _GView(QtWidgets.QGraphicsView):
 
 	def __init__(self, parent):
 		super(_GView, self).__init__(parent)
-
 		self.setRenderHint(QtGui.QPainter.Antialiasing, True)
 		self.setRenderHint(QtGui.QPainter.TextAntialiasing, True)
 		self.setRenderHint(QtGui.QPainter.HighQualityAntialiasing, True)

@@ -24,11 +24,13 @@ class GTaskCanvas(GCanvas):
 		else:
 			self.__rootMTaskNode = mTaskModel.getRoot()
 
+		self.views()[0].resize(1000, 600)
+
 	def keyPressEvent(self, event):
 		super(GTaskCanvas, self).keyPressEvent(event)
 		view = self.views()[0]
-		pos = view.mapToScene(view.mapFromGlobal(QtGui.QCursor.pos()))
-		pos = pos.x(), pos.y()
+		sPos = view.mapToScene(view.mapFromGlobal(QtGui.QCursor.pos()))
+		pos = sPos.x(), sPos.y()
 
 		if event.modifiers() == QtCore.Qt.ControlModifier:
 			if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
@@ -51,22 +53,34 @@ class GTaskCanvas(GCanvas):
 				if filePath[0]:
 					self.__mTaskModel.load(filePath[0])
 			elif event.key() == QtCore.Qt.Key_X: # Cut
-				self.__copySelected()
-				self.__deleteSelected()
+				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
+				if item.parent():
+					super(GTaskCanvas, self).keyPressEvent(event)
+				else:
+					self.__copySelected()
+					self.__deleteSelected()
 			elif event.key() == QtCore.Qt.Key_C: # Copy
-				self.__copySelected()
+				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
+				if item.parent():
+					super(GTaskCanvas, self).keyPressEvent(event)
+				else:
+					self.__copySelected()
 			elif event.key() == QtCore.Qt.Key_V: # Paste
-				mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
-				self.clearSelection()
-				mToGMapND, mToGMapC = self.__getMItemToGItemMap()
-				for mNode in mNodes:
-					gNode = mToGMapND.get(mNode)
-					if gNode:
-						gNode.setSelected(True)
-				for mConnection in mConnections:
-					gConnection = mToGMapC.get(mConnection)
-					if gConnection:
-						gConnection.setSelected(True)
+				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
+				if item.parent():
+					super(GTaskCanvas, self).keyPressEvent(event)
+				else:
+					mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
+					self.clearSelection()
+					mToGMapND, mToGMapC = self.__getMItemToGItemMap()
+					for mNode in mNodes:
+						gNode = mToGMapND.get(mNode)
+						if gNode:
+							gNode.setSelected(True)
+					for mConnection in mConnections:
+						gConnection = mToGMapC.get(mConnection)
+						if gConnection:
+							gConnection.setSelected(True)
 			elif event.key() == QtCore.Qt.Key_W: # Window
 				newCanvas = GTaskCanvas(self.__mTaskModel, self.__rootMTaskNode)
 				newCanvas.show()
@@ -84,6 +98,12 @@ class GTaskCanvas(GCanvas):
 						'done' : 'waiting',
 					}[status]
 					mNode.setAttr('status', newStatus)
+
+			else:
+				super(GTaskCanvas, self).keyPressEvent(event)
+
+		else:
+			super(GTaskCanvas, self).keyPressEvent(event)
 
 		self.update()
 
@@ -275,6 +295,7 @@ class GTaskNode(GRectNode):
 		ui.estimatedSB.setValue(mTaskNode.getAttr('estimated'))
 		ui.actualSB.setValue(mTaskNode.getAttr('actual'))
 		ui.descriptionTB.setText(mTaskNode.getAttr('description'))
+		ui.descriptionTB.setFocus()
 		self.__setActualEnabled()
 
 	def __connectSignalSlot(self):
@@ -331,8 +352,6 @@ class GTaskNode(GRectNode):
 				self._paintStyle.setBgBrush(bgColors['col'], bgColors['colSel'])
 		finally:
 			self.__processingAttrNames.remove(attrName)
-
-		self.update()
 
 	# Qt GraphicsWidget callbacks
 
