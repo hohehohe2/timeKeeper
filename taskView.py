@@ -54,20 +54,20 @@ class GTaskCanvas(GCanvas):
 					self.__mTaskModel.load(filePath[0])
 			elif event.key() == QtCore.Qt.Key_X: # Cut
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-				if item.parent():
+				if item and item.parent():
 					super(GTaskCanvas, self).keyPressEvent(event)
 				else:
 					self.__copySelected()
 					self.__deleteSelected()
 			elif event.key() == QtCore.Qt.Key_C: # Copy
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-				if item.parent():
+				if item and item.parent():
 					super(GTaskCanvas, self).keyPressEvent(event)
 				else:
 					self.__copySelected()
 			elif event.key() == QtCore.Qt.Key_V: # Paste
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-				if item.parent():
+				if item and item.parent():
 					super(GTaskCanvas, self).keyPressEvent(event)
 				else:
 					mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
@@ -98,12 +98,6 @@ class GTaskCanvas(GCanvas):
 						'done' : 'waiting',
 					}[status]
 					mNode.setAttr('status', newStatus)
-
-			else:
-				super(GTaskCanvas, self).keyPressEvent(event)
-
-		else:
-			super(GTaskCanvas, self).keyPressEvent(event)
 
 		self.update()
 
