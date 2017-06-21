@@ -56,7 +56,17 @@ class GTaskCanvas(GCanvas):
 			elif event.key() == QtCore.Qt.Key_C:
 				self.__copySelected()
 			elif event.key() == QtCore.Qt.Key_V:
-				self.__mTaskModel.paste(self.__rootMTaskNode)
+				mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
+				self.clearSelection()
+				mToGMapND, mToGMapC = self.__getMItemToGItemMap()
+				for mNode in mNodes:
+					gNode = mToGMapND.get(mNode)
+					if gNode:
+						gNode.setSelected(True)
+				for mConnection in mConnections:
+					gConnection = mToGMapC.get(mConnection)
+					if gConnection:
+						gConnection.setSelected(True)
 			elif event.key() == QtCore.Qt.Key_W:
 				newCanvas = GTaskCanvas(self.__mTaskModel, self.__rootMTaskNode)
 				newCanvas.show()

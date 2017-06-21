@@ -69,6 +69,8 @@ class MTaskModel(Observable):
 
 		self.__observe(nodes, connections)
 
+		return nodes, connections
+
 	def __observe(self, nodes, connections):
 
 		def observeNode(node):
