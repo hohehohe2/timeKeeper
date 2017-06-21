@@ -370,7 +370,7 @@ class GRectNode(GNodeBase):
 		minSize=[20, 20],
 		widgetLayoutType='vertical', # 'horizontal', 'vertical', or 'none'
 		widgetlayoutSpacing=1,
-		margins = (10, 3, 3, 3) # left, top, right, bottom
+		margins = (3, 10, 3, 3) # left, top, right, bottom
 		)
 
 	def __init__(self, canvas, x=0, y=0, width=40, height=40):

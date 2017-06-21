@@ -58,6 +58,10 @@ class GTaskCanvas(GCanvas):
 				self.__mTaskModel.copy(selectedNodes)
 			elif event.key() == QtCore.Qt.Key_V:
 				self.__mTaskModel.paste(self.__rootMTaskNode)
+			elif event.key() == QtCore.Qt.Key_W:
+				newCanvas = GTaskCanvas(self.__mTaskModel, self.__rootMTaskNode)
+				newCanvas.show()
+				newCanvas.__resetNetwork(self.__rootMTaskNode)
 
 		self.update()
 
