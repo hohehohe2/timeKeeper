@@ -32,8 +32,7 @@ class GTaskCanvas(GCanvas):
 
 		if event.modifiers() == QtCore.Qt.ControlModifier:
 			if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
-				while self.selectedItems():
-					self.selectedItems()[0].delete()
+				self.__deleteSelected()
 			elif event.key() == QtCore.Qt.Key_N:
 				node = self.__mTaskModel.createTaskNode(self.__rootMTaskNode)
 				node.setAttr('pos', pos)
@@ -51,11 +50,11 @@ class GTaskCanvas(GCanvas):
 				filePath = QtWidgets.QFileDialog.getOpenFileName(None, 'Open file', filter=("TimeKeeper (*.tkpickle)"))
 				if filePath[0]:
 					self.__mTaskModel.load(filePath[0])
+			elif event.key() == QtCore.Qt.Key_X:
+				self.__copySelected()
+				self.__deleteSelected()
 			elif event.key() == QtCore.Qt.Key_C:
-				selectedItems = self.selectedItems()
-				selectedItems = [x.getMItem() for x in selectedItems]
-				selectedNodes = [x for x in selectedItems if isinstance(x, (MTaskNode, MTaskDotNode))]
-				self.__mTaskModel.copy(selectedNodes)
+				self.__copySelected()
 			elif event.key() == QtCore.Qt.Key_V:
 				self.__mTaskModel.paste(self.__rootMTaskNode)
 			elif event.key() == QtCore.Qt.Key_W:
@@ -64,6 +63,16 @@ class GTaskCanvas(GCanvas):
 				newCanvas.__resetNetwork(self.__rootMTaskNode)
 
 		self.update()
+
+	def __deleteSelected(self):
+		while self.selectedItems():
+			self.selectedItems()[0].delete()
+
+	def __copySelected(self):
+		selectedItems = self.selectedItems()
+		selectedItems = [x.getMItem() for x in selectedItems]
+		selectedNodes = [x for x in selectedItems if isinstance(x, (MTaskNode, MTaskDotNode))]
+		self.__mTaskModel.copy(selectedNodes)
 
 	def mouseDoubleClickEvent(self, event):
 		itemFrom = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
