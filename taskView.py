@@ -291,6 +291,7 @@ class GTaskNode(GRectNode):
 		ui.descriptionTB.setText(mTaskNode.getAttr('description'))
 		ui.descriptionTB.setFocus()
 		self.__setActualEnabled()
+		self.__setStatus()
 
 	def __connectSignalSlot(self):
 		ui = self.__ui
@@ -337,15 +338,19 @@ class GTaskNode(GRectNode):
 			elif attrName == 'size':
 				self.resize(*newValue)
 			elif attrName == 'status':
-				if newValue == 'waiting':
-					bgColors = self.__waitingBgColors
-				elif newValue == 'wip':
-					bgColors = self.__wipBgColors
-				elif newValue == 'done':
-					bgColors = self.__doneBgColors
-				self._paintStyle.setBgBrush(bgColors['col'], bgColors['colSel'])
+				self.__setStatus()
 		finally:
 			self.__processingAttrNames.remove(attrName)
+
+	def __setStatus(self):
+		newValue = self.__mNode.getAttr('status')
+		if newValue == 'waiting':
+			bgColors = self.__waitingBgColors
+		elif newValue == 'wip':
+			bgColors = self.__wipBgColors
+		elif newValue == 'done':
+			bgColors = self.__doneBgColors
+		self._paintStyle.setBgBrush(bgColors['col'], bgColors['colSel'])
 
 	# Qt GraphicsWidget callbacks
 
