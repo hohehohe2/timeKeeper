@@ -35,14 +35,25 @@ class GTaskCanvas(GCanvas):
 				while self.selectedItems():
 					self.selectedItems()[0].delete()
 			elif event.key() == QtCore.Qt.Key_N:
-				node = self.__mTaskModel.addTaskNode(self.__rootMTaskNode)
+				node = self.__mTaskModel.createTaskNode(self.__rootMTaskNode)
 				node.setAttr('pos', pos)
 			elif event.key() == QtCore.Qt.Key_D:
-				node = self.__mTaskModel.addTaskDotNode(self.__rootMTaskNode)
+				node = self.__mTaskModel.createTaskDotNode(self.__rootMTaskNode)
 				node.setAttr('pos', pos)
 			elif event.key() == QtCore.Qt.Key_U:
 				if self.__rootMTaskNode.getParent():
 					self.__resetNetwork(self.__rootMTaskNode.getParent())
+			elif event.key() == QtCore.Qt.Key_S:
+				self.__mTaskModel.save(None)
+			elif event.key() == QtCore.Qt.Key_O:
+				self.__mTaskModel.load(None)
+			elif event.key() == QtCore.Qt.Key_C:
+				selectedItems = self.selectedItems()
+				selectedItems = [x.getMItem() for x in selectedItems]
+				selectedNodes = [x for x in selectedItems if isinstance(x, (MTaskNode, MTaskDotNode))]
+				self.__mTaskModel.copy(selectedNodes)
+			elif event.key() == QtCore.Qt.Key_V:
+				self.__mTaskModel.paste(self.__rootMTaskNode)
 
 		self.update()
 
@@ -51,16 +62,29 @@ class GTaskCanvas(GCanvas):
 		if isinstance(itemFrom, GTaskNode):
 			self.__resetNetwork(itemFrom.getMItem());
 
-	def __resetNetwork(self, rootMTaskNode):
+	def __resetNetwork(self, rootMTaskNode=None):
 		"""
 		Make this canvas show the network under rootTaskNode
 		"""
 		self.clear()
+
+		if rootMTaskNode:
+			p = rootMTaskNode
+			while p:
+				if p == self.__mTaskModel.getRoot():
+					break
+				p = p.getParent()
+			else:
+				assert(False and 'Invalid root model specified')
+		else:
+			rootMTaskNode = self.__mTaskModel.getRoot()
+
 		self.__rootMTaskNode = rootMTaskNode
 		connections = self.__mTaskModel.getConnections(rootMTaskNode)
-		self._addNetwork(rootMTaskNode.getChildren(), connections)
+		self.__addNetwork(rootMTaskNode.getChildren(), connections)
+		self.update()
 
-	def _addNetwork(self, mNodes, mConnections):
+	def __addNetwork(self, mNodes, mConnections):
 		"""
 		Add a network to the current canvas.
 		MNodes which parent is not the current root are ignored
@@ -92,6 +116,11 @@ class GTaskCanvas(GCanvas):
 		for mConnection in mConnections:
 			mNodeFrom = mConnection.getFrom()
 			mNodeTo = mConnection.getTo()
+
+			if (not mNodeFrom.getParent()) or (not mNodeTo.getParent()):
+				# The connection is about to be deleted
+				continue
+
 			assert(mNodeFrom.getParent() == mNodeTo.getParent())
 
 			if mNodeFrom.getParent() != self.__rootMTaskNode:
@@ -119,17 +148,26 @@ class GTaskCanvas(GCanvas):
 
 	def _onNotify(self, notifier, event, data):
 		if event in ['createTask', 'createDot']:
-			self._addNetwork([data], ())
+			self.__addNetwork([data], ())
 		elif event == 'createConnection':
-			self._addNetwork([], (data,))
+			self.__addNetwork([], (data,))
+		elif event == 'deleteTaskNode':
+			if data == self.__rootMTaskNode:
+				self.__resetNetwork()
+		elif event == 'changeRoot':
+			self.__resetNetwork(self.__mTaskModel.getRoot())
 
 	def _createConnection(self, gNodeFrom, gNodeTo):
 		connectableNodeType = (GTaskNode, GTaskDotNode)
 		if isinstance(gNodeFrom, connectableNodeType) and isinstance(gNodeTo, connectableNodeType):
-			self.__mTaskModel.addTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
+			self.__mTaskModel.createTaskConnection(gNodeFrom.getMItem(), gNodeTo.getMItem())
 
 	def __onDestroyed(self):
 		self.__mTaskModel.removeObserver(self)
+
+	def _onTaskNodeDeleted(self, gTaskNode):
+		if gTaskNode.getMItem() == self.__rootMTaskNode:
+			self.__resetNetwork()
 
 # ======================================================
 class GTaskNode(GRectNode):
@@ -274,6 +312,7 @@ class GTaskDotNode(GDotNode):
 		mTaskDotNode.addObserver(self)
 		self.__isPosChanging = False
 		self.geometryChanged.connect(self.__onGeometryChanged)
+		self.setPos(*mTaskDotNode.getAttr('pos'))
 
 		self.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
 		self.destroyed.connect(self.__onDestroyed)
@@ -408,8 +447,8 @@ if __name__ == '__main__':
 	ct1.setParent(model.getRoot())
 	ct2.setParent(model.getRoot())
 	connections = (MTaskConnection(ct1, ct2),)
-	canvas._addNetwork([ct1, ct2], connections) # Temporal, call model.addNode(), addConnection() etc.
-	canvas2._addNetwork([ct1, ct2], connections)
+	canvas._GTaskCanvas__addNetwork([ct1, ct2], connections) # Temporal, call model.addNode(), addConnection() etc.
+	canvas2._GTaskCanvas__addNetwork([ct1, ct2], connections)
 
 	canvas.show()
 	canvas2.show()

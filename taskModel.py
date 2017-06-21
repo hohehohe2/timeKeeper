@@ -1,3 +1,4 @@
+import cPickle as pickle
 from utils.observable import Observable
 from utils.treeNode import TreeNode
 
@@ -8,6 +9,8 @@ class MTaskModel(Observable):
 		super(MTaskModel, self).__init__()
 		self.__theRoot = MTaskNode()
 		self.__connections = []
+
+		self.__pasteData = None # pickle of ([mNode], [mConnection])
 
 	def getRoot(self):
 		return self.__theRoot
@@ -22,13 +25,74 @@ class MTaskModel(Observable):
 		else:
 			return self.__connections
 
-	def addTaskNode(self, parent):
-		return self.__addNode(parent, MTaskNode, 'createTask')
+	def clear(self):
+		for node in self.__theRoot.getChildren():
+			node.delete()
+		assert(not self.__connections)
 
-	def addTaskDotNode(self, parent):
-		return self.__addNode(parent, MTaskDotNode, 'createDot')
+	def save(self, filePath):
+		self.__TODOTako =pickle.dumps((self.__theRoot, self.__connections))
 
-	def addTaskConnection(self, mNodeFrom, mNodeTo):
+	def load(self, filePath):
+		theRoot, connections = pickle.loads(self.__TODOTako)
+		self.__theRoot = theRoot
+		self.__connections = connections
+		self.__observe([theRoot], connections)
+		self._notify('changeRoot')
+
+	def copy(self, mNodes):
+		connections = []
+
+		for connection in self.getConnections():
+			if connection.getFrom() in mNodes and connection.getTo() in mNodes:
+				connections.append(connection)
+
+		self.__pasteData = pickle.dumps((mNodes, connections))
+
+	def paste(self, parent):
+		self.__checkNode(parent)
+
+		nodes, connections = pickle.loads(self.__pasteData)
+
+		for node in nodes:
+			node.setParent(parent)
+			if isinstance(node, MTaskNode):
+				self._notify('createTask', node)
+			elif isinstance(node, MTaskDotNode):
+				self._notify('createDot', node)
+
+		for connection in connections:
+			self.__connections.append(connection)
+			self._notify('createConnection', connection)
+
+		self.__observe(nodes, connections)
+
+	def __observe(self, nodes, connections):
+
+		def observeNode(node):
+			if not isinstance(node, MTaskNode):
+				return
+			if not self in node.getObservers():
+				node.addObserver(self)
+			for child in node.getChildren():
+				observeNode(child)
+
+		for node in nodes:
+			observeNode(node)
+
+		for connection in connections:
+			if not self in connection.getObservers():
+				connection.addObserver(self)
+
+	def createTaskNode(self, parent):
+		node = self.__createNode(parent, MTaskNode, 'createTask')
+		node.addObserver(self)
+		return node
+
+	def createTaskDotNode(self, parent):
+		return self.__createNode(parent, MTaskDotNode, 'createDot')
+
+	def createTaskConnection(self, mNodeFrom, mNodeTo):
 		"""
 		Create connection and return it.
 		Returns None if the connection already exists
@@ -48,13 +112,15 @@ class MTaskModel(Observable):
 		self._notify('createConnection', connection) # For canvas update
 		return connection
 
-	def __addNode(self, parent, taskClass, eventToEmit):
+	def __createNode(self, parent, taskClass, eventToEmit):
+		node = taskClass(parent)
+		return self.__addNode(parent, node, eventToEmit)
+
+	def __addNode(self, parent, node, eventToEmit):
 		if not parent:
 			parent = self.__theRoot
 		else:
 			self.__checkNode(parent)
-
-		node = taskClass(parent)
 
 		# Node can remove itself from the tree on deletion so MTaskModel does not observe nodes
 		#node.addObserver(self)
@@ -75,8 +141,11 @@ class MTaskModel(Observable):
 
 	def _onNotify(self, notifier, event, data):
 		if event == 'deleted':
-			assert(notifier in self.__connections)
-			self.__connections.remove(notifier)
+			if notifier in self.__connections:
+				self.__connections.remove(notifier)
+			else:
+				assert(isinstance(notifier, MTaskNode))
+				self._notify('deleteTaskNode', notifier) # For canvas update
 
 # ------------------------------------------------------
 class MTaskNode(TreeNode):
@@ -149,7 +218,7 @@ class MTaskConnection(Observable):
 
 	def __getstate__(self):
 		d = self.__dict__.copy()
-		d['_Obserbable__observers'] = []
+		d['_Observable__observers'] = []
 		return d
 
 	def __setstate__(self, d):

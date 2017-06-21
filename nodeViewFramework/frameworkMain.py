@@ -195,6 +195,9 @@ class GCanvas(QtWidgets.QGraphicsScene):
 			return 
 
 		itemTo = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
+		if not itemTo:
+			return
+
 		while itemTo.parent():
 			itemTo = itemTo.parent()
 		if itemTo and isinstance(itemTo, GNodeBase) and itemTo != gnodeFrom:
