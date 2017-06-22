@@ -71,18 +71,18 @@ class GTaskCanvas(GCanvas):
 						self.__resetNetwork(pathNode)
 			elif event.key() == QtCore.Qt.Key_X: # Cut
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-				if item and item.parent():
+				if item:
 					return
 				self.__copySelected()
 				self.__deleteSelected()
 			elif event.key() == QtCore.Qt.Key_C: # Copy
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-				if item and item.parent():
+				if item:
 					return
 				self.__copySelected()
 			elif event.key() == QtCore.Qt.Key_V: # Paste
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-				if item and item.parent():
+				if item:
 					return
 				mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
 				self.clearSelection()
