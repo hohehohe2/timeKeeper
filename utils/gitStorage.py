@@ -7,6 +7,14 @@ class GitStorage(object):
 		self.__repo = git.Repo(repoPath)
 		self.__filePath = os.path.join(repoPath, fileName)
 
+	@staticmethod
+	def isRepoReady(repoPath):
+		try:
+			git.Repo(repoPath)
+			return True
+		except:
+			return False
+
 	def save(self, binaryData, commitMessage):
 		self.__repo.git.checkout('master')
 

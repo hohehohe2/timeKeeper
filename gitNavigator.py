@@ -1,4 +1,5 @@
 import os
+import inspect
 import datetime
 from utils.gitStorage import GitStorage
 from Qt import QtCore, QtGui, QtWidgets, QtCompat
@@ -13,6 +14,7 @@ class GitNavigator(QtWidgets.QWidget):
 		super(GitNavigator, self).__init__()
 
 		repoPath = os.environ['TIME_KEEPER_GIT_REPOSITORY']
+		self.__creatRepoIfNotExists(repoPath)
 		self.__gitStorage = GitStorage(repoPath, 'data.tkpickle')
 
 		self.__mTaskModel = mTaskModel
@@ -21,8 +23,13 @@ class GitNavigator(QtWidgets.QWidget):
 		self.updateUi()
 		self.__load()
 
+	def __creatRepoIfNotExists(self, repoPath):
+		if not GitStorage.isRepoReady(repoPath):
+			dirname = os.path.dirname(inspect.getabsfile(GitNavigator))
+			initRepoTemplateDir = os.path.join(dirname, 'initRepo')
+			os.system('cp -r %s %s' % (initRepoTemplateDir, repoPath))
+
 	def __loadUiFile(self):
-		import os, inspect
 		dirname = os.path.dirname(inspect.getabsfile(GitNavigator))
 		uiFilePath = os.path.join(dirname, 'loadDialog.ui')
 		self.__ui = QtCompat.loadUi(uiFilePath, self)
