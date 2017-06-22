@@ -72,32 +72,29 @@ class GTaskCanvas(GCanvas):
 			elif event.key() == QtCore.Qt.Key_X: # Cut
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
 				if item and item.parent():
-					super(GTaskCanvas, self).keyPressEvent(event)
-				else:
-					self.__copySelected()
-					self.__deleteSelected()
+					return
+				self.__copySelected()
+				self.__deleteSelected()
 			elif event.key() == QtCore.Qt.Key_C: # Copy
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
 				if item and item.parent():
-					super(GTaskCanvas, self).keyPressEvent(event)
-				else:
-					self.__copySelected()
+					return
+				self.__copySelected()
 			elif event.key() == QtCore.Qt.Key_V: # Paste
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
 				if item and item.parent():
-					super(GTaskCanvas, self).keyPressEvent(event)
-				else:
-					mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
-					self.clearSelection()
-					mToGMapND, mToGMapC = self.__getMItemToGItemMap()
-					for mNode in mNodes:
-						gNode = mToGMapND.get(mNode)
-						if gNode:
-							gNode.setSelected(True)
-					for mConnection in mConnections:
-						gConnection = mToGMapC.get(mConnection)
-						if gConnection:
-							gConnection.setSelected(True)
+					return
+				mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
+				self.clearSelection()
+				mToGMapND, mToGMapC = self.__getMItemToGItemMap()
+				for mNode in mNodes:
+					gNode = mToGMapND.get(mNode)
+					if gNode:
+						gNode.setSelected(True)
+				for mConnection in mConnections:
+					gConnection = mToGMapC.get(mConnection)
+					if gConnection:
+						gConnection.setSelected(True)
 			elif event.key() == QtCore.Qt.Key_W: # Window
 				newCanvas = GTaskCanvas(self.__mTaskModel, self.__rootMTaskNode)
 				newCanvas.show()
