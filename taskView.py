@@ -130,6 +130,8 @@ class GTaskCanvas(GCanvas):
 					return
 
 				self.__mTaskModel.assignUniqueName(gNode.getMItem(), newName)
+			elif event.key() == QtCore.Qt.Key_G:
+				self.__mTaskModel.sendToggleNavigator()
 
 		self.update()
 

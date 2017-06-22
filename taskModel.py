@@ -194,6 +194,9 @@ class MTaskModel(Observable):
 		newName = prefix + str(counter)
 		node.setName(newName)
 
+	def sendToggleNavigator(self):
+		self._notify('toggleGitNavigator')
+
 # ------------------------------------------------------
 class MTaskNode(TreeNode):
 	def __init__(self, parent=None, name=''):

@@ -90,3 +90,18 @@ class GitNavigator(QtWidgets.QWidget):
 		if isOk:
 			self.__save(commitMessage)
 			self.updateUi()
+
+	def _onNotify(self, notifier, event, data):
+		if event == 'toggleGitNavigator':
+			self.__toggleVisibility()
+
+	def keyPressEvent(self, event):
+		super(GitNavigator, self).keyPressEvent(event)
+
+		if event.modifiers() == QtCore.Qt.ControlModifier:
+			if event.key() == QtCore.Qt.Key_G:
+				self.__toggleVisibility()
+
+	def __toggleVisibility(self):
+		isVisible = self.isVisible()
+		self.setVisible(not isVisible)

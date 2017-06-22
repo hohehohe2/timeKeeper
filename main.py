@@ -10,7 +10,8 @@ model = MTaskModel()
 canvas = GTaskCanvas(model)
 canvas.show()
 
-loadDialog = GitNavigator(model)
-loadDialog.show()
+gitNavigator = GitNavigator(model)
+gitNavigator.show()
 
+model.addObserver(gitNavigator)
 app.exec_()
