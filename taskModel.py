@@ -214,6 +214,11 @@ class MTaskNode(TreeNode):
 	def isNode(self):
 		return True
 
+	def getChild(self, childName):
+		childNameToObjMap = [(x.getName(), x) for x in self.getChildren()]
+		childNameToObjMap = dict(childNameToObjMap)
+		return childNameToObjMap.get(childName)
+
 	def setParent(self, parent):
 		oldParent = self.getParent()
 		super(MTaskNode, self).setParent(parent)

@@ -99,6 +99,12 @@ class TreeNode(Observable):
 	def getParent(self):
 		return self.__parent
 
+	def getChild(self, childId):
+		"""
+		Override this to get the child in an application specific way
+		"""
+		pass
+
 	def getChildren(self):
 		return tuple(self.__children)
 

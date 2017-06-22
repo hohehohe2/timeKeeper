@@ -163,6 +163,20 @@ class GTaskCanvas(GCanvas):
 		self.__addNetwork(rootMTaskNode.getChildren(), connections)
 		self.update()
 
+	def __jumpTopath(self, path='/'):
+		node = self.__mTaskModel.getRoot()
+		if path == '/':
+			return self.__resetNetwork()
+
+		spPath = path.split('/')[1:]
+		while spPath:
+			nodeName = spPath.pop(0)
+			node = node.getChild(nodeName)
+			if not node:
+				return self.__resetNetwork() # Couldn't find
+
+		self.__resetNetwork(node)
+
 	def __addNetwork(self, mNodes, mConnections):
 		"""
 		Add a network to the current canvas.
@@ -234,7 +248,8 @@ class GTaskCanvas(GCanvas):
 			if data == self.__rootMTaskNode:
 				self.__resetNetwork()
 		elif event == 'changeRoot':
-			self.__resetNetwork(self.__mTaskModel.getRoot())
+			# Try to keep the path this canvas is showing
+			self.__jumpTopath(self.__rootMTaskNode.getPathStr())
 		elif event == 'renameTaskNode':
 			self.update()
 
