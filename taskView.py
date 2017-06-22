@@ -25,6 +25,8 @@ class GTaskCanvas(GCanvas):
 		else:
 			self.__rootMTaskNode = mTaskModel.getRoot()
 
+		self.__userSpecifiedPath = self.__rootMTaskNode.getPathStr()
+
 		view.resize(1000, 600)
 
 	def drawBackground(self, painter, rect):
@@ -55,6 +57,7 @@ class GTaskCanvas(GCanvas):
 			elif event.key() == QtCore.Qt.Key_U: # Up
 				if self.__rootMTaskNode.getParent():
 					self.__resetNetwork(self.__rootMTaskNode.getParent())
+					self.__userSpecifiedPath = self.__rootMTaskNode.getPathStr()
 			elif event.key() == QtCore.Qt.Key_S: # Save
 				filePath = QtWidgets.QFileDialog.getSaveFileName(None, 'Save File', filter=("time keeper (*.tkpickle)"))
 				if filePath[0]:
@@ -63,6 +66,9 @@ class GTaskCanvas(GCanvas):
 				filePath = QtWidgets.QFileDialog.getOpenFileName(None, 'Open file', filter=("TimeKeeper (*.tkpickle)"))
 				if filePath[0]:
 					self.__mTaskModel.load(filePath[0])
+					pathNode = self.__getPathNode(self.__userSpecifiedPath)
+					if pathNode:
+						self.__resetNetwork(pathNode)
 			elif event.key() == QtCore.Qt.Key_X: # Cut
 				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
 				if item and item.parent():
@@ -96,6 +102,7 @@ class GTaskCanvas(GCanvas):
 				newCanvas = GTaskCanvas(self.__mTaskModel, self.__rootMTaskNode)
 				newCanvas.show()
 				newCanvas.__resetNetwork(self.__rootMTaskNode)
+				self.__userSpecifiedPath = self.__rootMTaskNode.getPathStr()
 			elif event.key() == QtCore.Qt.Key_T: # Toggle status
 				gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
 				if not gNode:
@@ -109,7 +116,7 @@ class GTaskCanvas(GCanvas):
 						'done' : 'waiting',
 					}[status]
 					mNode.setAttr('status', newStatus)
-			elif event.key() == QtCore.Qt.Key_M: # Myouji
+			elif event.key() == QtCore.Qt.Key_R: # Rename
 				gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
 				if not gNode:
 					return
@@ -140,6 +147,7 @@ class GTaskCanvas(GCanvas):
 		itemFrom = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
 		if isinstance(itemFrom, GTaskNode):
 			self.__resetNetwork(itemFrom.getMItem());
+			self.__userSpecifiedPath = self.__rootMTaskNode.getPathStr()
 
 	def __resetNetwork(self, rootMTaskNode=None):
 		"""
@@ -161,21 +169,30 @@ class GTaskCanvas(GCanvas):
 		self.__rootMTaskNode = rootMTaskNode
 		connections = self.__mTaskModel.getConnections(rootMTaskNode)
 		self.__addNetwork(rootMTaskNode.getChildren(), connections)
+
 		self.update()
 
 	def __jumpTopath(self, path='/'):
+		node = self.__getPathNode(path)
+		if node:
+			return self.__resetNetwork(node)
+		else:
+			return self.__resetNetwork()
+
+	def __getPathNode(self, path):
 		node = self.__mTaskModel.getRoot()
 		if path == '/':
-			return self.__resetNetwork()
+			return node
 
 		spPath = path.split('/')[1:]
 		while spPath:
 			nodeName = spPath.pop(0)
 			node = node.getChild(nodeName)
 			if not node:
-				return self.__resetNetwork() # Couldn't find
+				return None # Couldn't find
 
-		self.__resetNetwork(node)
+		return node
+
 
 	def __addNetwork(self, mNodes, mConnections):
 		"""
@@ -248,10 +265,12 @@ class GTaskCanvas(GCanvas):
 			if data == self.__rootMTaskNode:
 				self.__resetNetwork()
 		elif event == 'changeRoot':
-			# Try to keep the path this canvas is showing
-			self.__jumpTopath(self.__rootMTaskNode.getPathStr())
+			self.__jumpTopath(self.__userSpecifiedPath)
 		elif event == 'renameTaskNode':
+			pathNode = self.__getPathNode(self.__userSpecifiedPath)
 			self.update()
+			if pathNode:
+				self.__userSpecifiedPath = pathNode.getPathStr()
 
 	def _createConnection(self, gNodeFrom, gNodeTo):
 		connectableNodeType = (GTaskNode, GTaskDotNode)

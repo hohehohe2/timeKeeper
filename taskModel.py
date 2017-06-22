@@ -75,6 +75,17 @@ class MTaskModel(Observable):
 
 		return nodes, connections
 
+	def getDumpString(self):
+		return pickle.dumps((self.__theRoot, self.__connections))
+
+	def setDumpString(self, dumString):
+		theRoot, connections = pickle.loads(dumString)
+
+		self.__theRoot = theRoot
+		self.__connections = connections
+		self.__observe([theRoot], connections)
+		self._notify('changeRoot')
+
 	def __observe(self, nodes, connections):
 
 		def observeNode(node):
@@ -215,7 +226,7 @@ class MTaskNode(TreeNode):
 		return True
 
 	def getChild(self, childName):
-		childNameToObjMap = [(x.getName(), x) for x in self.getChildren()]
+		childNameToObjMap = [(x.getName(), x) for x in self.getChildren() if isinstance(x, MTaskNode)]
 		childNameToObjMap = dict(childNameToObjMap)
 		return childNameToObjMap.get(childName)
 
