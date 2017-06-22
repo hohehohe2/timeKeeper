@@ -1,4 +1,5 @@
 import os
+import datetime
 from utils.gitStorage import GitStorage
 from Qt import QtCore, QtGui, QtWidgets, QtCompat
 
@@ -30,6 +31,7 @@ class GitNavigator(QtWidgets.QWidget):
 		ui = self.__ui
 		ui.scrabHS.valueChanged.connect(self.__onScrabValueChanged)
 		ui.logTW.itemClicked.connect(self.__onLogItemClicked)
+		ui.logTW.itemSelectionChanged.connect(self.__onLogItemSelectionChanged)
 		ui.savePB.clicked.connect(self.__onSave)
 
 	def updateUi(self):
@@ -48,9 +50,10 @@ class GitNavigator(QtWidgets.QWidget):
 
 		for rowCount, log in enumerate(logs):
 			message, hexSha, date = log
+			dateStr = datetime.datetime.fromtimestamp(date).strftime('%Y/%m/%d %H:%M:%S')
 
 			logTW.setItem(rowCount, self.__hexShaColumn, QtWidgets.QTableWidgetItem(hexSha))
-			logTW.setItem(rowCount, self.__dateColumn, QtWidgets.QTableWidgetItem(str(date)))
+			logTW.setItem(rowCount, self.__dateColumn, QtWidgets.QTableWidgetItem(dateStr))
 			logTW.setItem(rowCount, self.__messageColumn, QtWidgets.QTableWidgetItem(message.replace('\n', ' ')))
 
 		logTW.selectRow(maxLogCount)
@@ -71,13 +74,16 @@ class GitNavigator(QtWidgets.QWidget):
 		return self.__gitStorage.log(maxCount)
 
 	def __onScrabValueChanged(self, value):
-		item = QtWidgets.QTableWidgetItem
 		self.__ui.logTW.selectRow(value)
-		self.__load()
 
 	def __onLogItemClicked(self, items):
 		row = self.__ui.logTW.currentRow()
 		self.__ui.scrabHS.setValue(row)
+
+	def __onLogItemSelectionChanged(self):
+		row = self.__ui.logTW.currentRow()
+		self.__ui.scrabHS.setValue(row)
+		self.__load()
 
 	def __onSave(self):
 
