@@ -75,20 +75,26 @@ class GTaskCanvas(GCanvas):
 					self.__resetNetwork(pathNode)
 		elif event.key() == QtCore.Qt.Key_X: # Cut
 			item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-			if item:
+			if item and isinstance(item, QtWidgets.QGraphicsProxyWidget):
+				super(GTaskCanvas, self).keyPressEvent(event)
 				return
 			self.__copySelected()
 			self.__deleteSelected()
 		elif event.key() == QtCore.Qt.Key_C: # Copy
 			item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-			if item:
+			if item and isinstance(item, QtWidgets.QGraphicsProxyWidget):
+				super(GTaskCanvas, self).keyPressEvent(event)
 				return
 			self.__copySelected()
 		elif event.key() == QtCore.Qt.Key_V: # Paste
 			item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-			if item:
+			if item and isinstance(item, QtWidgets.QGraphicsProxyWidget):
+				super(GTaskCanvas, self).keyPressEvent(event)
 				return
-			mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
+			pasteItems = self.__mTaskModel.paste(self.__rootMTaskNode)
+			if not pasteItems:
+				return
+			mNodes, mConnections = pasteItems
 			self.clearSelection()
 			mToGMapND, mToGMapC = self.__getMItemToGItemMap()
 			for mNode in mNodes:
@@ -107,6 +113,7 @@ class GTaskCanvas(GCanvas):
 		elif event.key() == QtCore.Qt.Key_T: # Toggle status
 			gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
 			if not gNode:
+				super(GTaskCanvas, self).keyPressEvent(event)
 				return
 			mNode = gNode.getMItem()
 			if isinstance(mNode, MTaskNode):
@@ -120,6 +127,7 @@ class GTaskCanvas(GCanvas):
 		elif event.key() == QtCore.Qt.Key_R: # Rename
 			gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
 			if not gNode:
+				super(GTaskCanvas, self).keyPressEvent(event)
 				return
 
 			newName, isOk = QtWidgets.QInputDialog.getText(
@@ -128,6 +136,7 @@ class GTaskCanvas(GCanvas):
 				"New name:", QtWidgets.QLineEdit.Normal,
 				'task')
 			if not isOk:
+				super(GTaskCanvas, self).keyPressEvent(event)
 				return
 
 			self.__mTaskModel.assignUniqueName(gNode.getMItem(), newName)
@@ -157,6 +166,8 @@ class GTaskCanvas(GCanvas):
 		if isinstance(itemFrom, GTaskNode):
 			self.__resetNetwork(itemFrom.getMItem());
 			self.__userSpecifiedPath = self.__rootMTaskNode.getPathStr()
+		else:
+			super(GTaskCanvas, self).mouseDoubleClickEvent(event)
 
 	def __resetNetwork(self, rootMTaskNode=None):
 		"""

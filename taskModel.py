@@ -52,6 +52,9 @@ class MTaskModel(Observable):
 		self.__pasteData = pickle.dumps((mNodes, connections))
 
 	def paste(self, parent):
+		if not self.__pasteData:
+			return
+
 		self.__checkNode(parent)
 
 		nodes, connections = pickle.loads(self.__pasteData)
