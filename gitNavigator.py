@@ -3,6 +3,7 @@ import inspect
 import datetime
 from utils.gitStorage import GitStorage
 from Qt import QtCore, QtGui, QtWidgets, QtCompat
+from helpDialog import HelpDialog
 
 class GitNavigator(QtWidgets.QWidget):
 
@@ -114,6 +115,10 @@ class GitNavigator(QtWidgets.QWidget):
 		if event.modifiers() == QtCore.Qt.ControlModifier:
 			if event.key() == QtCore.Qt.Key_G:
 				self.__toggleVisibility()
+
+			elif event.key() == QtCore.Qt.Key_Slash:
+				hd = HelpDialog()
+				hd.show()
 
 	def __toggleVisibility(self):
 		isVisible = self.isVisible()

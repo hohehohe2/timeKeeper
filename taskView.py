@@ -5,6 +5,7 @@ from utils.mergeableDict import DynamicMergeableDict
 from nodeViewFramework.paintStyle import PaintStyle
 from nodeViewFramework.frameworkMain import GCanvas, GRectNode, GDotNode, GConnection
 from taskModel import MTaskNode, MTaskDotNode
+from helpDialog import HelpDialog
 
 # ======================================================
 class GTaskCanvas(GCanvas):
@@ -40,95 +41,104 @@ class GTaskCanvas(GCanvas):
 		painter.drawText(rect, pathStr)
 
 	def keyPressEvent(self, event):
-		super(GTaskCanvas, self).keyPressEvent(event)
+
+		if not event.modifiers() == QtCore.Qt.ControlModifier:
+			super(GTaskCanvas, self).keyPressEvent(event)
+			return
+
 		view = self.views()[0]
 		sPos = view.mapToScene(view.mapFromGlobal(QtGui.QCursor.pos()))
 		pos = sPos.x(), sPos.y()
 
-		if event.modifiers() == QtCore.Qt.ControlModifier:
-			if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
-				self.__deleteSelected()
-			elif event.key() == QtCore.Qt.Key_N: # Node
-				node = self.__mTaskModel.createTaskNode(self.__rootMTaskNode)
-				node.setAttr('pos', pos)
-			elif event.key() == QtCore.Qt.Key_D: # Dot
-				node = self.__mTaskModel.createTaskDotNode(self.__rootMTaskNode)
-				node.setAttr('pos', pos)
-			elif event.key() == QtCore.Qt.Key_U: # Up
-				if self.__rootMTaskNode.getParent():
-					self.__resetNetwork(self.__rootMTaskNode.getParent())
-					self.__userSpecifiedPath = self.__rootMTaskNode.getPathStr()
-			elif event.key() == QtCore.Qt.Key_S: # Save
-				filePath = QtWidgets.QFileDialog.getSaveFileName(None, 'Save File', filter=("time keeper (*.tkpickle)"))
-				if filePath[0]:
-					self.__mTaskModel.save(filePath[0])
-			elif event.key() == QtCore.Qt.Key_O: # Open
-				filePath = QtWidgets.QFileDialog.getOpenFileName(None, 'Open file', filter=("TimeKeeper (*.tkpickle)"))
-				if filePath[0]:
-					self.__mTaskModel.load(filePath[0])
-					pathNode = self.__getPathNode(self.__userSpecifiedPath)
-					if pathNode:
-						self.__resetNetwork(pathNode)
-			elif event.key() == QtCore.Qt.Key_X: # Cut
-				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-				if item:
-					return
-				self.__copySelected()
-				self.__deleteSelected()
-			elif event.key() == QtCore.Qt.Key_C: # Copy
-				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-				if item:
-					return
-				self.__copySelected()
-			elif event.key() == QtCore.Qt.Key_V: # Paste
-				item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
-				if item:
-					return
-				mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
-				self.clearSelection()
-				mToGMapND, mToGMapC = self.__getMItemToGItemMap()
-				for mNode in mNodes:
-					gNode = mToGMapND.get(mNode)
-					if gNode:
-						gNode.setSelected(True)
-				for mConnection in mConnections:
-					gConnection = mToGMapC.get(mConnection)
-					if gConnection:
-						gConnection.setSelected(True)
-			elif event.key() == QtCore.Qt.Key_W: # Window
-				newCanvas = GTaskCanvas(self.__mTaskModel, self.__rootMTaskNode)
-				newCanvas.show()
-				newCanvas.__resetNetwork(self.__rootMTaskNode)
+		if event.key() == QtCore.Qt.Key_Delete or event.key() == QtCore.Qt.Key_Backspace:
+			self.__deleteSelected()
+		elif event.key() == QtCore.Qt.Key_N: # Node
+			node = self.__mTaskModel.createTaskNode(self.__rootMTaskNode)
+			node.setAttr('pos', pos)
+		elif event.key() == QtCore.Qt.Key_D: # Dot
+			node = self.__mTaskModel.createTaskDotNode(self.__rootMTaskNode)
+			node.setAttr('pos', pos)
+		elif event.key() == QtCore.Qt.Key_U: # Up
+			if self.__rootMTaskNode.getParent():
+				self.__resetNetwork(self.__rootMTaskNode.getParent())
 				self.__userSpecifiedPath = self.__rootMTaskNode.getPathStr()
-			elif event.key() == QtCore.Qt.Key_T: # Toggle status
-				gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
-				if not gNode:
-					return
-				mNode = gNode.getMItem()
-				if isinstance(mNode, MTaskNode):
-					status = mNode.getAttr('status')
-					newStatus = {
-						'waiting' : 'wip',
-						'wip' : 'done',
-						'done' : 'waiting',
-					}[status]
-					mNode.setAttr('status', newStatus)
-			elif event.key() == QtCore.Qt.Key_R: # Rename
-				gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
-				if not gNode:
-					return
+		elif event.key() == QtCore.Qt.Key_S: # Save
+			filePath = QtWidgets.QFileDialog.getSaveFileName(None, 'Save File', filter=("time keeper (*.tkpickle)"))
+			if filePath[0]:
+				self.__mTaskModel.save(filePath[0])
+		elif event.key() == QtCore.Qt.Key_O: # Open
+			filePath = QtWidgets.QFileDialog.getOpenFileName(None, 'Open file', filter=("TimeKeeper (*.tkpickle)"))
+			if filePath[0]:
+				self.__mTaskModel.load(filePath[0])
+				pathNode = self.__getPathNode(self.__userSpecifiedPath)
+				if pathNode:
+					self.__resetNetwork(pathNode)
+		elif event.key() == QtCore.Qt.Key_X: # Cut
+			item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
+			if item:
+				return
+			self.__copySelected()
+			self.__deleteSelected()
+		elif event.key() == QtCore.Qt.Key_C: # Copy
+			item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
+			if item:
+				return
+			self.__copySelected()
+		elif event.key() == QtCore.Qt.Key_V: # Paste
+			item = self.itemAt(sPos.toPoint(), QtGui.QTransform())
+			if item:
+				return
+			mNodes, mConnections = self.__mTaskModel.paste(self.__rootMTaskNode)
+			self.clearSelection()
+			mToGMapND, mToGMapC = self.__getMItemToGItemMap()
+			for mNode in mNodes:
+				gNode = mToGMapND.get(mNode)
+				if gNode:
+					gNode.setSelected(True)
+			for mConnection in mConnections:
+				gConnection = mToGMapC.get(mConnection)
+				if gConnection:
+					gConnection.setSelected(True)
+		elif event.key() == QtCore.Qt.Key_W: # Window
+			newCanvas = GTaskCanvas(self.__mTaskModel, self.__rootMTaskNode)
+			newCanvas.show()
+			newCanvas.__resetNetwork(self.__rootMTaskNode)
+			self.__userSpecifiedPath = self.__rootMTaskNode.getPathStr()
+		elif event.key() == QtCore.Qt.Key_T: # Toggle status
+			gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
+			if not gNode:
+				return
+			mNode = gNode.getMItem()
+			if isinstance(mNode, MTaskNode):
+				status = mNode.getAttr('status')
+				newStatus = {
+					'waiting' : 'wip',
+					'wip' : 'done',
+					'done' : 'waiting',
+				}[status]
+				mNode.setAttr('status', newStatus)
+		elif event.key() == QtCore.Qt.Key_R: # Rename
+			gNode = self._findNodeAtPosition(QtCore.QPointF(*pos))
+			if not gNode:
+				return
 
-				newName, isOk = QtWidgets.QInputDialog.getText(
-					None,
-					'Rename node',
-					"New name:", QtWidgets.QLineEdit.Normal,
-					'task')
-				if not isOk:
-					return
+			newName, isOk = QtWidgets.QInputDialog.getText(
+				None,
+				'Rename node',
+				"New name:", QtWidgets.QLineEdit.Normal,
+				'task')
+			if not isOk:
+				return
 
-				self.__mTaskModel.assignUniqueName(gNode.getMItem(), newName)
-			elif event.key() == QtCore.Qt.Key_G:
-				self.__mTaskModel.sendToggleNavigator()
+			self.__mTaskModel.assignUniqueName(gNode.getMItem(), newName)
+		elif event.key() == QtCore.Qt.Key_G:
+			self.__mTaskModel.sendToggleNavigator()
+		elif event.key() == QtCore.Qt.Key_Slash:
+			hd = HelpDialog()
+			hd.show()
+		else:
+			super(GTaskCanvas, self).keyPressEvent(event)
+			return
 
 		self.update()
 
