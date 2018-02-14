@@ -10,10 +10,16 @@ class MTaskModel(Observable):
 		self.__theRoot = MTaskNode()
 		self.__connections = []
 
+		self.__invalidNode = MTaskNode()
+		self.__invalidNode.setName('NOT EXISTS')
+
 		self.__pasteData = None # pickle of ([mNode], [mConnection])
 
 	def getRoot(self):
 		return self.__theRoot
+
+	def getInvalidNode(self):
+		return self.__invalidNode
 
 	def getConnections(self, limitUnderThisChildren=None):
 		if limitUnderThisChildren:

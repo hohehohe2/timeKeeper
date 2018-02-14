@@ -164,7 +164,18 @@ class GTaskCanvas(GCanvas):
 	def mouseDoubleClickEvent(self, event):
 		itemFrom = self.itemAt(event.scenePos().toPoint(), QtGui.QTransform())
 		if isinstance(itemFrom, GTaskNode):
-			self.__resetNetwork(itemFrom.getMItem());
+			if event.modifiers() == QtCore.Qt.ControlModifier:
+				newCanvas = GTaskCanvas(self.__mTaskModel, itemFrom.getMItem())
+				selfCanvasView = self.views()[0]
+				pos = selfCanvasView.mapFromScene(event.scenePos())
+				newCanvasView = newCanvas.views()[0]
+				newCanvasView.move(selfCanvasView.pos() + QtCore.QPoint(50, 50))
+				newCanvasView.resize(800, 500)
+				newCanvas.__resetNetwork(itemFrom.getMItem())
+				newCanvas.show()
+			else:
+				self.__resetNetwork(itemFrom.getMItem());
+
 			self.__userSpecifiedPath = self.__rootMTaskNode.getPathStr()
 		else:
 			super(GTaskCanvas, self).mouseDoubleClickEvent(event)
@@ -184,7 +195,7 @@ class GTaskCanvas(GCanvas):
 			else:
 				assert(False and 'Invalid root model specified')
 		else:
-			rootMTaskNode = self.__mTaskModel.getRoot()
+			rootMTaskNode = self.__mTaskModel.getInvalidNode()
 
 		self.__rootMTaskNode = rootMTaskNode
 		connections = self.__mTaskModel.getConnections(rootMTaskNode)
@@ -283,7 +294,7 @@ class GTaskCanvas(GCanvas):
 			self.__addNetwork([], (data,))
 		elif event == 'deleteTaskNode':
 			if data == self.__rootMTaskNode:
-				self.__resetNetwork()
+				self.__resetNetwork(self.__mTaskModel.getRoot())
 		elif event == 'changeRoot':
 			self.__jumpTopath(self.__userSpecifiedPath)
 		elif event == 'renameTaskNode':
@@ -302,7 +313,7 @@ class GTaskCanvas(GCanvas):
 
 	def _onTaskNodeDeleted(self, gTaskNode):
 		if gTaskNode.getMItem() == self.__rootMTaskNode:
-			self.__resetNetwork()
+			self.__resetNetwork(self.__mTaskModel.getRoot())
 
 
 
